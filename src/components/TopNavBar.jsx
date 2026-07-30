@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function TopNavBar() {
+export default function TopNavBar({ onToggleSidebar, sidebarOpen }) {
   const [notifOpen, setNotifOpen] = React.useState(false)
   const [profileOpen, setProfileOpen] = React.useState(false)
   const navigate = useNavigate()
@@ -26,6 +26,12 @@ export default function TopNavBar() {
   return (
     <header className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline">
       <div className="flex items-center gap-sm">
+        <button
+          onClick={onToggleSidebar}
+          className="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors"
+        >
+          <span className="material-symbols-outlined text-primary dark:text-primary-fixed">menu</span>
+        </button>
         <span className="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary-fixed">LPSE Verifier Portal</span>
       </div>
       

@@ -4,8 +4,8 @@ import InfoCard from '../components/InfoCard'
 
 export default function PengajuanForm() {
   const [formData, setFormData] = React.useState({
-    nama_lengkap: 'Ahmad Verifikator, S.Kom',
-    nip: '19920101 201503 1 001',
+    nama_lengkap: '',
+    nip: '',
     jabatan: '',
     satker: '',
   })
@@ -95,11 +95,11 @@ export default function PengajuanForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
             <div className="space-y-xs">
               <label className="block font-label-md text-label-md text-on-surface">Nama Lengkap</label>
-              <input className="w-full bg-white border border-outline-variant rounded px-md py-sm font-body-md text-body-md" name="nama_lengkap" value={formData.nama_lengkap} onChange={handleChange} />
+              <input className="w-full bg-white border border-outline-variant rounded px-md py-sm font-body-md text-body-md" placeholder="Masukkan nama lengkap" name="nama_lengkap" value={formData.nama_lengkap} onChange={handleChange} />
             </div>
             <div className="space-y-xs">
               <label className="block font-label-md text-label-md text-on-surface">NIP</label>
-              <input className="w-full bg-white border border-outline-variant rounded px-md py-sm font-body-md text-body-md" name="nip" value={formData.nip} onChange={handleChange} />
+              <input className="w-full bg-white border border-outline-variant rounded px-md py-sm font-body-md text-body-md" placeholder="Masukkan NIP" name="nip" value={formData.nip} onChange={handleChange} />
             </div>
             <div className="space-y-xs">
               <label className="block font-label-md text-label-md text-on-surface">Jabatan</label>

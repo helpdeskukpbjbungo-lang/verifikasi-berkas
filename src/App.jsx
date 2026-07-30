@@ -18,15 +18,26 @@ function PublicRoute({ children }) {
 }
 
 function AppLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = React.useState(false)
+
+  const toggleSidebar = () => setSidebarOpen((prev) => !prev)
+  const closeSidebar = () => setSidebarOpen(false)
+
   return (
     <div className="min-h-screen bg-background text-on-surface">
-      <TopNavBar />
+      <TopNavBar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       <div className="flex min-h-[calc(100vh-64px)]">
-        <SideNavBar />
-        <main className="ml-64 flex-1 bg-background pt-6">
+        <SideNavBar open={sidebarOpen} onClose={closeSidebar} />
+        <main className="flex-1 bg-background pt-6 px-4 md:px-6">
           {children}
         </main>
       </div>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={closeSidebar}
+        />
+      )}
     </div>
   )
 }
