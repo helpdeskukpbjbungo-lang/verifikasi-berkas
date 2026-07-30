@@ -22,6 +22,19 @@ export default function PengajuanForm() {
     setFiles((prev) => ({ ...prev, [jenis]: file }))
   }
 
+  const handleSaveDraft = () => {
+    const draft = {
+      formData,
+      files: Object.fromEntries(
+        Object.entries(files).map(([key, file]) => [key, { name: file.name, size: file.size, type: file.type }])
+      ),
+      savedAt: new Date().toISOString(),
+    }
+    localStorage.setItem('pengajuan-draft', JSON.stringify(draft))
+    setSubmitMessage('Draft berhasil disimpan')
+    setTimeout(() => setSubmitMessage(''), 3000)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
@@ -113,12 +126,12 @@ export default function PengajuanForm() {
           <div className="space-y-sm">
             <FileUploadCard title="Surat Permohonan" description="Wajib diunggah dengan tanda tangan basah dan cap basah." onFileChange={(file) => handleFileChange('surat_permohonan', file)} />
             <FileUploadCard title="Pakta Integritas" description="Dokumen pernyataan integritas sesuai standar LPSE terbaru." onFileChange={(file) => handleFileChange('pakta_integritas', file)} />
-            <FileUploadCard title="SK Terbaru" description="Surat Keputusan pengangkatan jabatan terakhir dalam format PDF." onFileChange={(file) => handleFileChange('sk_terbaru', file)} />
+            <FileUploadCard title="SK PPK/PP/PA Terbaru" description="Surat Keputusan pengangkatan sebagai PA/PPK/PP dalam format PDF." onFileChange={(file) => handleFileChange('sk_terbaru', file)} />
           </div>
         </section>
 
         <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md">
-          <button className="w-full sm:w-auto px-xl py-3 border border-outline text-on-surface-variant font-label-md rounded-lg hover:bg-surface-container-low transition-all" type="button">
+          <button onClick={handleSaveDraft} className="w-full sm:w-auto px-xl py-3 border border-outline text-on-surface-variant font-label-md rounded-lg hover:bg-surface-container-low transition-all" type="button">
             Simpan Draft
           </button>
           <button className="w-full sm:w-auto px-xl py-3 bg-primary text-white font-label-md rounded-lg shadow-lg hover:bg-primary-container transition-all flex items-center justify-center gap-2" type="submit" disabled={submitting}>
