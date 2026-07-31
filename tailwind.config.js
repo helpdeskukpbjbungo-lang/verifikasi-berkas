@@ -9,6 +9,7 @@ export default {
     extend: {
       colors: {
         'surface-container': '#e7eeff',
+        'surface-container-low': '#f0f3ff',
         'background': '#f9f9ff',
         'secondary': '#1960a3',
         'surface-variant': '#d8e3fa',

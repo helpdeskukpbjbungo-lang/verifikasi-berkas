@@ -4,10 +4,12 @@ import TopNavBar from './components/TopNavBar'
 import SideNavBar from './components/SideNavBar'
 import PengajuanForm from './pages/PengajuanForm'
 import CekStatus from './pages/CekStatus'
+import KolomCekStatus from './pages/KolomCekStatus'
 import LoginVerifikator from './pages/LoginVerifikator'
-import LoginPemohon from './pages/LoginPemohon'
 import DashboardVerifikator from './pages/DashboardVerifikator'
-import DashboardPemohon from './pages/DashboardPemohon'
+import PengajuanMasuk from './pages/PengajuanMasuk'
+import DetailPengajuan from './pages/DetailPengajuan'
+import LaporanVerifikator from './pages/LaporanVerifikator'
 
 function ProtectedRoute({ children }) {
   return children
@@ -28,7 +30,7 @@ function AppLayout({ children }) {
       <TopNavBar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
       <div className="flex min-h-[calc(100vh-64px)]">
         <SideNavBar open={sidebarOpen} onClose={closeSidebar} />
-        <main className="flex-1 bg-background pt-6 px-4 md:px-6">
+        <main className="flex-1 bg-background pt-6 px-4 md:px-6 md:ml-72">
           {children}
         </main>
       </div>
@@ -52,24 +54,33 @@ function App() {
             <LoginVerifikator />
           </PublicRoute>
         } />
-        <Route path="/login/pemohon" element={
-          <PublicRoute>
-            <LoginPemohon />
-          </PublicRoute>
-        } />
 
         {/* Protected Routes */}
-        <Route path="/dashboard/verifikator" element={
+        <Route path="/verifikator" element={
           <ProtectedRoute>
             <AppLayout>
               <DashboardVerifikator />
             </AppLayout>
           </ProtectedRoute>
         } />
-        <Route path="/dashboard/pemohon" element={
+        <Route path="/pengajuan-masuk" element={
           <ProtectedRoute>
             <AppLayout>
-              <DashboardPemohon />
+              <PengajuanMasuk />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/pengajuan-masuk/:id" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DetailPengajuan />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/verifikator/laporan" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <LaporanVerifikator />
             </AppLayout>
           </ProtectedRoute>
         } />
@@ -77,18 +88,21 @@ function App() {
         {/* Default Route */}
         <Route path="/" element={
           <PublicRoute>
-            <AppLayout>
-              <PengajuanForm />
-            </AppLayout>
+            <PengajuanForm />
           </PublicRoute>
         } />
 
         {/* Cek Status Route */}
         <Route path="/cek-status" element={
           <PublicRoute>
-            <AppLayout>
-              <CekStatus />
-            </AppLayout>
+            <CekStatus />
+          </PublicRoute>
+        } />
+
+        {/* Kolom Cek Status Route */}
+        <Route path="/kolom-cek-status" element={
+          <PublicRoute>
+            <KolomCekStatus />
           </PublicRoute>
         } />
 

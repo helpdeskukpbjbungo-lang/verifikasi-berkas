@@ -109,7 +109,7 @@ router.post('/pengajuan', upload.fields([
     }
 
     res.status(201).json({
-      message: 'Pengajuan berhasil dikirim',
+      message: 'Pengajuan berhasil dikirim. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.',
       pengajuanId: formulirId,
       pemohonId: formulirId,
     })

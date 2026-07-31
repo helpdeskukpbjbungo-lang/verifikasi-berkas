@@ -10,7 +10,7 @@ export default function LoginVerifikator() {
   const navigate = useNavigate()
 
   if (user) {
-    return <Navigate to="/dashboard/verifikator" replace />
+    return <Navigate to="/verifikator" replace />
   }
 
   const handleSubmit = async (e) => {
@@ -25,7 +25,7 @@ export default function LoginVerifikator() {
     }
 
     if (data) {
-      navigate('/dashboard/verifikator')
+      navigate('/verifikator')
     }
   }
 

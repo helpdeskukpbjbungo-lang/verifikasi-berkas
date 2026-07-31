@@ -1,6 +1,5 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import logo from '../img/logo-ukpbjbungo.png'
 
 export default function SideNavBar({ open, onClose }) {
   const navigate = useNavigate()
@@ -10,23 +9,34 @@ export default function SideNavBar({ open, onClose }) {
 
   const menuItems = [
     {
-      label: 'Pengajuan',
-      icon: 'description',
-      path: '/',
+      label: 'Dashboard',
+      icon: 'dashboard',
+      path: '/verifikator',
       activeStyle: 'bg-secondary-container text-on-secondary-container font-semibold',
-      inactiveStyle: 'hover:bg-surface-variant dark:hover:bg-surface-container-highest text-on-surface-variant',
+      inactiveStyle: 'text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-container-highest',
     },
     {
-      label: 'Cek Status',
-      icon: 'verified_user',
-      path: '/cek-status',
+      label: 'Pengajuan Masuk',
+      icon: 'inbox',
+      path: '/pengajuan-masuk',
       activeStyle: 'bg-secondary-container text-on-secondary-container font-semibold',
-      inactiveStyle: 'hover:bg-surface-variant dark:hover:bg-surface-container-highest text-on-surface-variant',
+      inactiveStyle: 'text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-container-highest',
+    },
+    {
+      label: 'Laporan',
+      icon: 'assessment',
+      path: '/verifikator/laporan',
+      activeStyle: 'bg-secondary-container text-on-secondary-container font-semibold',
+      inactiveStyle: 'text-on-surface-variant hover:bg-surface-variant dark:hover:bg-surface-container-highest',
     },
   ]
 
+  const systemItems = []
+
   const handleNavigate = (path) => {
-    navigate(path)
+    if (path !== '#') {
+      navigate(path)
+    }
     onClose?.()
   }
 
@@ -34,29 +44,26 @@ export default function SideNavBar({ open, onClose }) {
     <>
       <aside
         className={`
-          fixed top-16 inset-x-0 bottom-0 left-0 w-64 flex flex-col pb-md z-40
-          bg-white dark:bg-white border-r border-outline-variant dark:border-outline
+          fixed top-16 inset-x-0 bottom-0 left-0 w-72 flex flex-col pb-md z-40
+          bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant dark:border-outline
           transform transition-transform duration-300 ease-in-out
-          md:relative md:inset-y-0 md:translate-x-0
+          md:fixed md:top-16 md:bottom-0 md:translate-x-0
           ${open ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        <div className="flex justify-center py-4 pb-6">
-          <img
-            src={logo}
-            alt="Logo UKPBJ Bungo"
-            className="h-10 md:h-8 w-auto max-w-full object-contain shrink-0"
-          />
-        </div>
+        <div className="px-md pt-sm mb-lg">
+          <div className="flex items-center gap-sm mb-xs">
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
+              <span className="material-symbols-outlined text-on-primary text-sm">shield</span>
+            </div>
+            <div className="mt-sm">
+              <p className="text-label-md font-black text-primary leading-tight">LPSE Verifier</p>
+              <p className="text-xs text-on-surface-variant font-medium">Official Portal</p>
+            </div>
+          </div>
+          </div>
 
-        <button
-          onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-low transition-colors z-50"
-        >
-          <span className="material-symbols-outlined text-primary">close</span>
-        </button>
-
-        <nav className="flex-1 overflow-y-auto px-sm space-y-1">
+        <nav className="flex-1 px-sm space-y-xs overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const active = isActive(item.path)
             return (
@@ -66,16 +73,40 @@ export default function SideNavBar({ open, onClose }) {
                 className={`flex items-center gap-sm px-md py-sm cursor-pointer transition-all rounded-lg font-label-md text-label-md ${active ? item.activeStyle : item.inactiveStyle}`}
               >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="whitespace-nowrap">{item.label}</span>
               </a>
             )
           })}
+
+          {systemItems.map((item) => (
+            <a
+              key={item.path}
+              onClick={() => handleNavigate(item.path)}
+              className="flex items-center gap-sm px-md py-sm cursor-pointer transition-all text-on-surface-variant hover:bg-surface-variant font-label-md text-label-md"
+            >
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span>{item.label}</span>
+            </a>
+          ))}
         </nav>
-        <div className="px-sm pt-md border-t border-outline-variant">
-          <a onClick={() => alert('Fitur Settings akan segera hadir.')} className="flex items-center gap-sm px-md py-sm cursor-pointer transition-all hover:bg-surface-variant text-on-surface-variant font-label-md text-label-md">
-            <span className="material-symbols-outlined">settings</span>
-            <span>Settings</span>
-          </a>
+
+        <div className="mt-auto px-md pt-md border-t border-outline-variant">
+          <div className="flex items-center gap-sm mb-sm">
+            <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center">
+              <span className="material-symbols-outlined text-on-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>admin_panel_settings</span>
+            </div>
+            <div>
+              <p className="text-label-md font-bold text-primary leading-tight">Administrator</p>
+              <p className="text-[10px] text-on-surface-variant">admin@lpse.go.id</p>
+            </div>
+          </div>
+          <div className="bg-surface-container rounded-lg p-sm">
+            <p className="text-xs font-bold text-primary mb-1">Server Status</p>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[10px] text-on-surface-variant">Operational - v2.4.1</span>
+            </div>
+          </div>
         </div>
       </aside>
     </>
