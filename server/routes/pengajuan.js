@@ -173,22 +173,40 @@ router.get('/pengajuan/:id', async (req, res) => {
 router.put('/pengajuan/:id/status', async (req, res) => {
   try {
     const { id } = req.params
-    const { status } = req.body
+    const { status, alasan_ditolak, alasan_revisi } = req.body
+
+    console.log('Update status request:', { id, status, alasan_ditolak, alasan_revisi })
 
     if (!['draft', 'submitted', 'verified', 'rejected'].includes(status)) {
       return res.status(400).json({ error: 'Status tidak valid' })
     }
 
-    const { error } = await supabase
+    const updatePayload = { status, updated_at: new Date().toISOString() }
+    if (status === 'rejected') {
+      updatePayload.alasan_ditolak = alasan_ditolak || null
+    }
+    if (status === 'submitted' && alasan_revisi) {
+      updatePayload.alasan_revisi = alasan_revisi
+    }
+
+    const { data, error } = await supabase
       .from('formulir_pengajuan')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', id)
+      .select()
+
+    console.log('Update status result:', { data, error })
 
     if (error) {
+      console.error('Supabase update error:', error)
+      return res.status(500).json({ error: 'Gagal memperbarui status di database' })
+    }
+
+    if (!data || data.length === 0) {
       return res.status(404).json({ error: 'Pengajuan tidak ditemukan' })
     }
 
-    res.json({ message: 'Status diperbarui', status })
+    res.json({ message: 'Status diperbarui', status, formulir: data[0] })
   } catch (error) {
     console.error('Error updating status:', error)
     res.status(500).json({ error: 'Gagal memperbarui status' })

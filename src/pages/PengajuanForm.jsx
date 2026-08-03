@@ -176,18 +176,18 @@ export default function PengajuanForm() {
                 </select>
               </div>
             </div>
-            <div className="space-y-xs">
-              <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="satuan_kerja">Satuan Kerja</label>
-              <div className="border border-outline-variant rounded-lg p-sm bg-white flex items-center gap-sm form-focus transition-all">
-                <span className="material-symbols-outlined text-outline">corporate_fare</span>
-                <select className="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md appearance-none" id="satuan_kerja" name="satker" value={formData.satker} onChange={handleChange}>
-                  <option value="">Pilih Satuan Kerja</option>
-                  <option value="1">Kementerian Keuangan</option>
-                  <option value="2">Kementerian Pekerjaan Umum</option>
-                  <option value="3">Dinas Pendidikan Provinsi</option>
-                </select>
+              <div className="space-y-xs">
+                <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="satuan_kerja">Satuan Kerja</label>
+                <div className="border border-outline-variant rounded-lg p-sm bg-white flex items-center gap-sm form-focus transition-all">
+                  <span className="material-symbols-outlined text-outline">corporate_fare</span>
+                  <select className="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md appearance-none" id="satuan_kerja" name="satker" value={formData.satker} onChange={handleChange}>
+                    <option value="">Pilih Satuan Kerja</option>
+                    <option value="Kementerian Keuangan">Kementerian Keuangan</option>
+                    <option value="Kementerian Pekerjaan Umum">Kementerian Pekerjaan Umum</option>
+                    <option value="Dinas Pendidikan Provinsi">Dinas Pendidikan Provinsi</option>
+                  </select>
+                </div>
               </div>
-            </div>
           </div>
         </section>
 

@@ -63,23 +63,41 @@ export default function PengajuanMasuk() {
     setIsModalOpen(false)
     setSelectedItem(null)
     setDetailData(null)
+    setShowRejectForm(false)
+    setRejectReason('')
+    setShowRevisionForm(false)
+    setRevisionNote('')
   }
 
   const [loadingAction, setLoadingAction] = React.useState(false)
+  const [showRejectForm, setShowRejectForm] = React.useState(false)
+  const [rejectReason, setRejectReason] = React.useState('')
+  const [showRevisionForm, setShowRevisionForm] = React.useState(false)
+  const [revisionNote, setRevisionNote] = React.useState('')
 
-  const updateStatus = async (status) => {
+  const updateStatus = async (status, alasanDitolak = null, alasanRevisi = null) => {
     if (!selectedItem) return
     setLoadingAction(true)
     try {
-      await fetch(`/api/pengajuan/${selectedItem.id}/status`, {
+      const response = await fetch(`/api/pengajuan/${selectedItem.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, alasan_ditolak: alasanDitolak, alasan_revisi: alasanRevisi }),
       })
-      closeModal()
-      loadData()
+      if (response.ok) {
+        closeModal()
+        loadData()
+        setShowRejectForm(false)
+        setRejectReason('')
+        setShowRevisionForm(false)
+        setRevisionNote('')
+      } else {
+        const result = await response.json()
+        alert(`Gagal: ${result.error || 'Unknown error'}`)
+      }
     } catch (err) {
       console.error('Failed to update status:', err)
+      alert(`Gagal memperbarui status: ${err.message}`)
     } finally {
       setLoadingAction(false)
     }
@@ -110,8 +128,13 @@ export default function PengajuanMasuk() {
       .slice(0, 2)
   }
 
-  const getStatusBadge = (status) => {
-    switch (status) {
+  const isRevisionRequested = (item) => item.status === 'submitted' && !!item.alasan_revisi
+
+  const getStatusBadge = (item) => {
+    if (isRevisionRequested(item)) {
+      return 'bg-orange-50 text-orange-700 border border-orange-200'
+    }
+    switch (item.status) {
       case 'submitted':
         return 'bg-secondary-container/10 text-on-secondary-container border border-secondary-container/30'
       case 'verified':
@@ -123,8 +146,11 @@ export default function PengajuanMasuk() {
     }
   }
 
-  const getStatusLabel = (status) => {
-    switch (status) {
+  const getStatusLabel = (item) => {
+    if (isRevisionRequested(item)) {
+      return 'Minta Revisi'
+    }
+    switch (item.status) {
       case 'submitted':
         return 'Menunggu Verifikasi'
       case 'verified':
@@ -134,7 +160,7 @@ export default function PengajuanMasuk() {
       case 'draft':
         return 'Draft'
       default:
-        return status
+        return item.status
     }
   }
 
@@ -285,30 +311,32 @@ export default function PengajuanMasuk() {
                     <td className="px-sm py-sm">{formatDateTime(item.created_at)}</td>
                     <td className="px-sm py-sm text-center">
                       <span
-                        className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status)}`}
+                        className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item)}`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
-                            item.status === 'verified'
-                              ? 'bg-green-500'
-                              : item.status === 'rejected'
-                                ? 'bg-error'
-                                : 'bg-secondary'
+                            isRevisionRequested(item)
+                              ? 'bg-orange-500'
+                              : item.status === 'verified'
+                                ? 'bg-green-500'
+                                : item.status === 'rejected'
+                                  ? 'bg-error'
+                                  : 'bg-secondary'
                           }`}
                         ></span>
-                        {getStatusLabel(item.status)}
+                        {getStatusLabel(item)}
                       </span>
                     </td>
                     <td className="px-sm py-sm text-center">
                       <button
                         onClick={() => openDetail(item)}
                         className={
-                          item.status === 'verified'
+                          item.status === 'verified' || item.status === 'rejected' || isRevisionRequested(item)
                             ? 'inline-flex items-center gap-xs px-md py-1.5 rounded font-label-sm hover:bg-surface-container-low transition-all'
                             : 'inline-block bg-primary text-on-primary px-md py-1.5 rounded font-label-sm hover:bg-primary-container shadow-sm active:scale-95 transition-all'
                         }
                       >
-                        {item.status === 'verified' ? (
+                        {item.status === 'verified' || item.status === 'rejected' || isRevisionRequested(item) ? (
                           <span className="material-symbols-outlined text-sm">visibility</span>
                         ) : (
                           'Periksa'
@@ -354,12 +382,12 @@ export default function PengajuanMasuk() {
           <div className="w-[50vw] max-h-[90vh] flex flex-col bg-surface-container-lowest rounded-lg shadow-xl overflow-y-auto" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="flex items-center justify-between p-md border-b border-outline-variant">
-              <div className="flex items-center gap-sm">
-                <h3 className="text-headline-sm font-headline-sm text-primary">Detail Pengajuan</h3>
-                <span className="px-sm py-base text-xs font-semibold rounded-full bg-secondary-container/10 text-on-secondary-container border border-secondary-container/30">
-                  {getStatusLabel(selectedItem.status)}
-                </span>
-              </div>
+                <div className="flex items-center gap-sm">
+                  <h3 className="text-headline-sm font-headline-sm text-primary">Detail Pengajuan</h3>
+                  <span className={`px-sm py-base text-xs font-semibold rounded-full ${getStatusBadge(selectedItem)}`}>
+                    {getStatusLabel(selectedItem)}
+                  </span>
+                </div>
               <button onClick={closeModal} className="p-xs hover:bg-surface-container-low rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-on-surface-variant">close</span>
               </button>
@@ -462,18 +490,120 @@ export default function PengajuanMasuk() {
                         Pengajuan sudah disetujui — {formatDateTime(selectedItem.updated_at || selectedItem.created_at)}
                       </span>
                     </div>
+                  ) : selectedItem?.status === 'rejected' ? (
+                    <div className="flex flex-col items-center gap-sm">
+                      <span className="text-label-md font-bold text-red-700 flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-sm">cancel</span>
+                        Pengajuan sudah ditolak — {formatDateTime(selectedItem.updated_at || selectedItem.created_at)}
+                      </span>
+                      {selectedItem.alasan_ditolak && (
+                        <p className="text-body-sm text-on-surface-variant text-center max-w-2xl">
+                          <span className="font-semibold">Alasan:</span> {selectedItem.alasan_ditolak}
+                        </p>
+                      )}
+                    </div>
+                  ) : isRevisionRequested(selectedItem) ? (
+                    <div className="flex flex-col items-center gap-sm">
+                      <span className="text-label-md font-bold text-orange-700 flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-sm">edit</span>
+                        Permintaan Revisi — {formatDateTime(selectedItem.updated_at || selectedItem.created_at)}
+                      </span>
+                      {selectedItem.alasan_revisi && (
+                        <p className="text-body-sm text-on-surface-variant text-center max-w-2xl">
+                          <span className="font-semibold">Catatan Revisi:</span> {selectedItem.alasan_revisi}
+                        </p>
+                      )}
+                    </div>
                   ) : (
-                    <div className="flex gap-sm w-full">
-                      <button className="flex-1 md:flex-none px-md py-xs border border-error text-error font-bold rounded-md hover:bg-error-container/10 transition-colors uppercase text-xs tracking-wide">
-                        Tolak
-                      </button>
-                      <button className="flex-1 md:flex-none px-md py-xs border border-secondary text-secondary font-bold rounded-md hover:bg-surface-container-low transition-colors uppercase text-xs tracking-wide">
-                        Minta Revisi
-                      </button>
-                      <button onClick={() => updateStatus('verified')} disabled={loadingAction} className="flex-1 md:flex-none px-md py-xs bg-primary text-white font-bold rounded-md hover:opacity-90 transition-all flex items-center justify-center gap-xs uppercase text-xs tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span className="material-symbols-outlined text-sm">verified</span>
-                        Setujui
-                      </button>
+                    <div className="flex flex-col gap-sm">
+                      <div className="flex gap-sm w-full">
+                        <button
+                          type="button"
+                          onClick={() => setShowRejectForm((prev) => !prev)}
+                          disabled={loadingAction}
+                          className="flex-1 md:flex-none px-md py-xs border border-error text-error font-bold rounded-md hover:bg-error-container/10 transition-colors uppercase text-xs tracking-wide disabled:opacity-50"
+                        >
+                          <span className="material-symbols-outlined text-sm align-middle mr-xs">close</span>
+                          Tolak
+                        </button>
+                         <button
+                           type="button"
+                           onClick={() => setShowRevisionForm((prev) => !prev)}
+                           disabled={loadingAction}
+                           className="flex-1 md:flex-none px-md py-xs border border-secondary text-secondary font-bold rounded-md hover:bg-surface-container-low transition-colors uppercase text-xs tracking-wide disabled:opacity-50"
+                         >
+                           <span className="material-symbols-outlined text-sm align-middle mr-xs">edit</span>
+                           Minta Revisi
+                         </button>
+                        <button onClick={() => updateStatus('verified')} disabled={loadingAction} className="flex-1 md:flex-none px-md py-xs bg-primary text-white font-bold rounded-md hover:opacity-90 transition-all flex items-center justify-center gap-xs uppercase text-xs tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
+                          <span className="material-symbols-outlined text-sm">verified</span>
+                          Setujui
+                        </button>
+                      </div>
+                      {showRejectForm && (
+                        <div className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
+                          <label className="block text-label-sm text-on-surface-variant font-semibold mb-xs">
+                            Alasan Penolakan
+                          </label>
+                          <textarea
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            rows={3}
+                            className="w-full px-md py-sm bg-white border border-outline-variant rounded-lg text-body-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                            placeholder="Masukkan alasan penolakan..."
+                          />
+                          <div className="flex items-center justify-end gap-sm mt-sm">
+                            <button
+                              type="button"
+                              onClick={() => { setShowRejectForm(false); setRejectReason('') }}
+                              disabled={loadingAction}
+                              className="px-md py-xs rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-50"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateStatus('rejected', rejectReason)}
+                              disabled={loadingAction || !rejectReason.trim()}
+                              className="px-md py-xs rounded-lg bg-error text-on-error font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50"
+                            >
+                              {loadingAction ? 'Menyimpan...' : 'Kirim Penolakan'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {showRevisionForm && (
+                        <div className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
+                          <label className="block text-label-sm text-on-surface-variant font-semibold mb-xs">
+                            Catatan Revisi
+                          </label>
+                          <textarea
+                            value={revisionNote}
+                            onChange={(e) => setRevisionNote(e.target.value)}
+                            rows={3}
+                            className="w-full px-md py-sm bg-white border border-outline-variant rounded-lg text-body-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                            placeholder="Masukkan catatan revisi untuk pemohon..."
+                          />
+                          <div className="flex items-center justify-end gap-sm mt-sm">
+                            <button
+                              type="button"
+                              onClick={() => { setShowRevisionForm(false); setRevisionNote('') }}
+                              disabled={loadingAction}
+                              className="px-md py-xs rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors disabled:opacity-50"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateStatus('submitted', null, revisionNote)}
+                              disabled={loadingAction || !revisionNote.trim()}
+                              className="px-md py-xs rounded-lg bg-secondary text-white font-label-md text-label-md hover:opacity-90 transition-colors disabled:opacity-50"
+                            >
+                              {loadingAction ? 'Menyimpan...' : 'Kirim Revisi'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

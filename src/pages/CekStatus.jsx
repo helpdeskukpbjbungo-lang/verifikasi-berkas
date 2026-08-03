@@ -5,68 +5,27 @@ export default function CekStatus() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const nip = searchParams.get('nip') || ''
-  const [pegawai, setPegawai] = React.useState(null)
+  const pengajuanId = searchParams.get('id') || ''
+  const [pengajuanList, setPengajuanList] = React.useState([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState(false)
+  const [historyPage, setHistoryPage] = React.useState(1)
+  const HISTORY_PER_PAGE = 2
 
   React.useEffect(() => {
     if (!nip) return
     setLoading(true)
     setError(false)
-    fetch('/api/pengajuan')
+    setHistoryPage(1)
+    fetch(`/api/pengajuan?_t=${Date.now()}`)
       .then((res) => res.json())
       .then((data) => {
-        const found = data.find((item) => item.nip === nip)
-        if (found) {
-          setPegawai(found)
-        } else {
-          setPegawai(null)
-        }
+        const matched = data.filter((item) => item.nip === nip)
+        setPengajuanList(matched)
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [nip])
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'submitted':
-        return 'bg-secondary-container/10 text-on-secondary-container border border-secondary-container/30'
-      case 'verified':
-        return 'bg-green-50 text-green-700 border border-green-200'
-      case 'rejected':
-        return 'bg-error-container/10 text-on-error-container border border-error-container/30'
-      default:
-        return 'bg-surface-container-low text-on-surface-variant border border-outline-variant'
-    }
-  }
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'submitted':
-        return 'Menunggu Verifikasi'
-      case 'verified':
-        return 'Terverifikasi'
-      case 'rejected':
-        return 'Ditolak'
-      case 'draft':
-        return 'Draft'
-      default:
-        return status
-    }
-  }
-
-  const getProgressInfo = (status) => {
-    switch (status) {
-      case 'submitted':
-        return { title: 'Dokumen Sedang Diverifikasi', desc: 'Dokumen Anda sedang dalam antrean verifikasi oleh tim LPSE. Estimasi waktu penyelesaian adalah 1-3 hari kerja.', color: 'bg-primary' }
-      case 'verified':
-        return { title: 'Pengajuan Telah Disetujui', desc: 'Pengajuan Anda telah diverifikasi dan disetujui oleh tim LPSE.', color: 'bg-green-500' }
-      case 'rejected':
-        return { title: 'Pengajuan Ditolak', desc: 'Pengajuan Anda ditolak. Silakan perbaiki dokumen dan ajukan kembali.', color: 'bg-error' }
-      default:
-        return { title: 'Menunggu Verifikasi', desc: 'Status pengajuan Anda sedang dalam proses.', color: 'bg-primary' }
-    }
-  }
 
   const formatDateTime = (dateStr) => {
     if (!dateStr) return '-'
@@ -79,7 +38,7 @@ export default function CekStatus() {
     if (!dateStr) return null
     const date = new Date(dateStr)
     date.setHours(date.getHours() + hours)
-    return formatDateTime(date.toISOString())
+    return date.toISOString()
   }
 
   const buildHistory = (item) => {
@@ -87,47 +46,143 @@ export default function CekStatus() {
     const created = item.created_at ? formatDateTime(item.created_at) : null
     const updated = item.updated_at ? formatDateTime(item.updated_at) : null
 
-    const base = [
-      {
+    const history = []
+
+    if (item.status === 'draft') {
+      history.push({
+        tanggal: updated || created || '-',
+        aktivitas: 'Simpan Draft',
+        status: 'Selesai',
+        statusWarna: 'on-surface-variant',
+        keterangan: 'Draft pengajuan diperbarui',
+        _sortAt: item.updated_at || item.created_at,
+      })
+    } else {
+      history.push({
         tanggal: created || '-',
         aktivitas: 'Submit Pengajuan',
         status: 'Berhasil',
         statusWarna: 'green-600',
         keterangan: 'Dokumen lengkap telah diterima sistem',
-      },
-    ]
+        _sortAt: item.created_at,
+      })
 
-    if (item.status === 'submitted') {
-      base.push({
-        tanggal: updated || addHours(item.created_at, 4) || '-',
-        aktivitas: 'Verifikasi Dokumen',
-        status: 'Sedang Diproses',
-        statusWarna: 'secondary',
-        keterangan: 'Menunggu antrean verifikator LPSE',
-      })
-    } else if (item.status === 'verified') {
-      base.push({
-        tanggal: updated || addHours(item.created_at, 8) || '-',
-        aktivitas: 'Verifikasi Dokumen',
-        status: 'Terverifikasi',
-        statusWarna: 'green-600',
-        keterangan: 'Pengajuan telah diverifikasi dan disetujui',
-      })
-    } else if (item.status === 'rejected') {
-      base.push({
-        tanggal: updated || addHours(item.created_at, 6) || '-',
-        aktivitas: 'Verifikasi Dokumen',
-        status: 'Ditolak',
-        statusWarna: 'red-600',
-        keterangan: 'Pengajuan ditolak — dokumen tidak lengkap',
-      })
+      if (item.status === 'submitted') {
+        const isRevision = item.alasan_revisi
+        if (isRevision) {
+          history.push({
+            tanggal: updated || formatDateTime(addHours(item.created_at, 4)) || '-',
+            aktivitas: 'Minta Revisi',
+            status: 'Minta Revisi',
+            statusWarna: 'orange-600',
+            keterangan: item.alasan_revisi || 'Dokumen perlu direvisi sesuai catatan verifikator',
+            _sortAt: item.updated_at || addHours(item.created_at, 4),
+          })
+        } else {
+          history.push({
+            tanggal: updated || formatDateTime(addHours(item.created_at, 4)) || '-',
+            aktivitas: 'Verifikasi Dokumen',
+            status: 'Sedang Diproses',
+            statusWarna: 'secondary',
+            keterangan: 'Menunggu antrean verifikator LPSE',
+            _sortAt: item.updated_at || addHours(item.created_at, 4),
+          })
+        }
+      } else if (item.status === 'verified') {
+        history.push({
+          tanggal: updated || formatDateTime(addHours(item.created_at, 8)) || '-',
+          aktivitas: 'Verifikasi Dokumen',
+          status: 'Terverifikasi',
+          statusWarna: 'green-600',
+          keterangan: 'Pengajuan telah diverifikasi dan disetujui',
+          _sortAt: item.updated_at || addHours(item.created_at, 8),
+        })
+      } else if (item.status === 'rejected') {
+        const alasan = item.alasan_ditolak ? `: ${item.alasan_ditolak}` : ''
+        history.push({
+          tanggal: updated || formatDateTime(addHours(item.created_at, 6)) || '-',
+          aktivitas: 'Verifikasi Dokumen',
+          status: 'Ditolak',
+          statusWarna: 'red-600',
+          keterangan: `Pengajuan ditolak${alasan}`,
+          _sortAt: item.updated_at || addHours(item.created_at, 6),
+        })
+      }
     }
 
-    return base.reverse()
+    return history
   }
 
-  const history = buildHistory(pegawai)
-  const isRejected = pegawai?.status === 'rejected'
+  const selectedPengajuan = pengajuanId
+    ? pengajuanList.find((item) => item.id === pengajuanId) || null
+    : pengajuanList.length > 0
+      ? [...pengajuanList].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))[0]
+      : null
+  const histories = pengajuanList.map((item) => buildHistory(item))
+  const selectedHistory = selectedPengajuan
+    ? (histories[pengajuanList.findIndex((item) => item.id === selectedPengajuan.id)] || [])
+    : []
+  const isRejected = selectedPengajuan?.status === 'rejected'
+
+  const isRevisionRequested = (item) => item.status === 'submitted' && !!item.alasan_revisi
+
+  const getStatusBadge = (item) => {
+    if (isRevisionRequested(item)) {
+      return 'bg-orange-50 text-orange-700 border border-orange-200'
+    }
+    switch (item.status) {
+      case 'submitted':
+        return 'bg-secondary-container/10 text-on-secondary-container border border-secondary-container/30'
+      case 'verified':
+        return 'bg-green-50 text-green-700 border border-green-200'
+      case 'rejected':
+        return 'bg-error-container/10 text-on-error-container border border-error-container/30'
+      default:
+        return 'bg-surface-container-low text-on-surface-variant border border-outline-variant'
+    }
+  }
+
+  const getStatusLabel = (item) => {
+    if (isRevisionRequested(item)) {
+      return 'Minta Revisi'
+    }
+    switch (item.status) {
+      case 'submitted':
+        return 'Menunggu Verifikasi'
+      case 'verified':
+        return 'Terverifikasi'
+      case 'rejected':
+        return 'Ditolak'
+      case 'draft':
+        return 'Draft'
+      default:
+        return item.status
+    }
+  }
+
+  const getProgressInfo = (status, item) => {
+    if (isRevisionRequested(item)) {
+      return { title: 'Minta Revisi', desc: `Dokumen Anda perlu direvisi: ${item.alasan_revisi}`, color: 'bg-orange-500' }
+    }
+    switch (status) {
+      case 'verified':
+        return { title: 'Pengajuan Telah Disetujui', desc: 'Pengajuan Anda telah diverifikasi dan disetujui oleh tim LPSE.', color: 'bg-green-500' }
+      case 'rejected':
+        return { title: 'Pengajuan Ditolak', desc: 'Pengajuan Anda ditolak. Silakan perbaiki dokumen dan ajukan kembali.', color: 'bg-error' }
+      default:
+        return { title: 'Dokumen Sedang Diverifikasi', desc: 'Dokumen Anda sedang dalam antrean verifikasi oleh tim LPSE. Estimasi waktu penyelesaian adalah 1-3 hari kerja.', color: 'bg-primary' }
+    }
+  }
+
+  const allHistory = histories.flat().sort((a, b) => {
+    const ta = a._sortAt || ''
+    const tb = b._sortAt || ''
+    return tb.localeCompare(ta)
+  })
+  const totalHistoryPages = Math.max(1, Math.ceil(allHistory.length / HISTORY_PER_PAGE))
+  const safeHistoryPage = Math.min(historyPage, totalHistoryPages)
+  const startIdx = (safeHistoryPage - 1) * HISTORY_PER_PAGE
+  const paginatedHistory = allHistory.slice(startIdx, startIdx + HISTORY_PER_PAGE)
   return (
     <div className="bg-background min-h-screen">
       <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs bg-surface border-b border-outline-variant">
@@ -165,91 +220,131 @@ export default function CekStatus() {
               </div>
               {loading && <p className="font-body-sm text-body-sm text-on-surface-variant">Memuat data pegawai...</p>}
               {error && <p className="font-body-sm text-body-sm text-red-600">Gagal memuat data pegawai.</p>}
-              {!loading && !error && pegawai && (
+              {!loading && !error && selectedPengajuan && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant">NIP</p>
-                    <p className="font-body-md text-body-md text-on-surface">{pegawai.nip}</p>
+                    <p className="font-body-md text-body-md text-on-surface">{selectedPengajuan.nip}</p>
                   </div>
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant">Nama Lengkap</p>
-                    <p className="font-body-md text-body-md text-on-surface">{pegawai.nama_lengkap}</p>
+                    <p className="font-body-md text-body-md text-on-surface">{selectedPengajuan.nama_lengkap}</p>
                   </div>
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant">Satuan Kerja</p>
-                    <p className="font-body-md text-body-md text-on-surface">{pegawai.satker || '-'}</p>
+                    <p className="font-body-md text-body-md text-on-surface">{selectedPengajuan.satker || '-'}</p>
                   </div>
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant">Jabatan</p>
-                    <p className="font-body-md text-body-md text-on-surface">{pegawai.jabatan || '-'}</p>
+                    <p className="font-body-md text-body-md text-on-surface">{selectedPengajuan.jabatan || '-'}</p>
                   </div>
                 </div>
               )}
-              {!loading && !error && !pegawai && (
+              {!loading && !error && pengajuanList.length === 0 && (
                 <p className="font-body-sm text-body-sm text-on-surface-variant">Data pegawai dengan NIP tersebut tidak ditemukan.</p>
               )}
             </section>
           )}
-          <section className="bg-surface-container border border-primary rounded-xl p-lg mb-lg">
-            <div className="flex items-center justify-between mb-md">
-              <div className="flex items-center gap-sm">
-                <span className="material-symbols-outlined text-primary">info</span>
-                <h2 className="font-headline-sm text-headline-sm text-primary">Status Pengajuan Terakhir</h2>
-              </div>
-              {pegawai?.status && (
-                <span className={`px-sm py-xs rounded-full text-label-md font-label-md ${getStatusBadge(pegawai.status)}`}>
-                  {getStatusLabel(pegawai.status)}
-                </span>
-              )}
-            </div>
-            <div className="space-y-sm">
-              <div className="flex items-start gap-md">
-                <div className="flex flex-col items-center">
-                  <div className={`w-3 h-3 rounded-full ${pegawai?.status ? getProgressInfo(pegawai.status).color : 'bg-primary'}`}></div>
-                  <div className="w-px h-12 bg-outline-variant"></div>
-                  <div className="w-3 h-3 rounded-full bg-outline-variant"></div>
-                </div>
-                <div className="space-y-xs">
-                  <p className="font-body-md text-body-md text-primary font-bold">
-                    {pegawai?.status ? getProgressInfo(pegawai.status).title : 'Dokumen Sedang Diverifikasi'}
-                  </p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">
-                    {pegawai?.status ? getProgressInfo(pegawai.status).desc : 'Dokumen Anda sedang dalam antrean verifikasi oleh tim LPSE. Estimasi waktu penyelesaian adalah 1-3 hari kerja.'}
-                  </p>
-                  <p className="font-label-sm text-label-sm text-outline mt-xs">Terakhir diperbarui pada {history[0]?.tanggal || '-'}</p>
-                </div>
-              </div>
-            </div>
-          </section>
 
-          <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg mt-lg">
-            <div className="flex items-center gap-sm mb-lg border-b border-outline-variant pb-md">
-              <span className="material-symbols-outlined text-secondary">history</span>
-              <h2 className="font-headline-sm text-headline-sm text-primary">Riwayat Aktivitas Pengajuan</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-surface-container-low">
-                  <tr className="text-label-md text-on-surface-variant">
-                    <th className="p-md border-b border-outline-variant">Tanggal &amp; Waktu</th>
-                    <th className="p-md border-b border-outline-variant">Aktivitas</th>
-                    <th className="p-md border-b border-outline-variant">Status</th>
-                    <th className="p-md border-b border-outline-variant">Keterangan</th>
-                  </tr>
-                </thead>
-                <tbody className="text-body-sm">
-                  {history.map((item, index) => (
-                    <tr key={index} className="border-b border-outline-variant">
-                      <td className="p-md">{item.tanggal}</td>
-                      <td className="p-md font-bold">{item.aktivitas}</td>
-                      <td className="p-md">{item.statusWarna ? <span className={`text-${item.statusWarna}`}>{item.status}</span> : item.status}</td>
-                      <td className="p-md">{item.keterangan}</td>
+          {selectedPengajuan && (
+            <section className="bg-surface-container border border-primary rounded-xl p-lg mb-lg">
+                <div className="flex items-center justify-between mb-md">
+                  <div className="flex items-center gap-sm">
+                    <span className="material-symbols-outlined text-primary">info</span>
+                    <h2 className="font-headline-sm text-headline-sm text-primary">
+                      Status Pengajuan {pengajuanId ? `#${pengajuanId.slice(0, 8)}` : 'Terakhir'}
+                    </h2>
+                  </div>
+                  {selectedPengajuan.status && (
+                    <span className={`px-sm py-xs rounded-full text-label-md font-label-md ${getStatusBadge(selectedPengajuan)}`}>
+                      {getStatusLabel(selectedPengajuan)}
+                    </span>
+                  )}
+              </div>
+              <div className="space-y-sm">
+                <div className="flex items-start gap-md">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-3 h-3 rounded-full ${getProgressInfo(selectedPengajuan.status, selectedPengajuan).color}`}></div>
+                    <div className="w-px h-12 bg-outline-variant"></div>
+                    <div className="w-3 h-3 rounded-full bg-outline-variant"></div>
+                  </div>
+                    <div className="space-y-xs">
+                      <p className="font-body-md text-body-md text-primary font-bold">
+                        {getProgressInfo(selectedPengajuan.status, selectedPengajuan).title}
+                      </p>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">
+                        {getProgressInfo(selectedPengajuan.status, selectedPengajuan).desc}
+                      </p>
+                       {selectedPengajuan.status === 'rejected' && selectedPengajuan.alasan_ditolak && (
+                         <p className="font-body-sm text-body-sm text-red-700">
+                           <span className="font-semibold">Alasan:</span> {selectedPengajuan.alasan_ditolak}
+                         </p>
+                       )}
+                       {isRevisionRequested(selectedPengajuan) && selectedPengajuan.alasan_revisi && (
+                         <p className="font-body-sm text-body-sm text-orange-700">
+                           <span className="font-semibold">Catatan Revisi:</span> {selectedPengajuan.alasan_revisi}
+                         </p>
+                       )}
+                      <p className="font-label-sm text-label-sm text-outline mt-xs">Terakhir diperbarui pada {formatDateTime(selectedPengajuan.updated_at)}</p>
+                    </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {pengajuanList.length > 0 && (
+            <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg mt-lg">
+              <div className="flex items-center gap-sm mb-lg border-b border-outline-variant pb-md">
+                <span className="material-symbols-outlined text-secondary">history</span>
+                <h2 className="font-headline-sm text-headline-sm text-primary">Riwayat Aktivitas Pengajuan</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-surface-container-low">
+                    <tr className="text-label-md text-on-surface-variant">
+                      <th className="p-md border-b border-outline-variant">Tanggal &amp; Waktu</th>
+                      <th className="p-md border-b border-outline-variant">Aktivitas</th>
+                      <th className="p-md border-b border-outline-variant">Status</th>
+                      <th className="p-md border-b border-outline-variant">Keterangan</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody className="text-body-sm">
+                    {(pengajuanId ? selectedHistory : paginatedHistory).map((h, hIdx) => (
+                      <tr key={hIdx} className="border-b border-outline-variant">
+                        <td className="p-md">{h.tanggal}</td>
+                        <td className="p-md font-bold">{h.aktivitas}</td>
+                        <td className="p-md">{h.statusWarna ? <span className={`text-${h.statusWarna}`}>{h.status}</span> : h.status}</td>
+                        <td className="p-md">{h.keterangan}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!pengajuanId && totalHistoryPages > 1 && (
+                <div className="flex items-center justify-between mt-md pt-md border-t border-outline-variant">
+                  <button
+                    type="button"
+                    onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                    disabled={safeHistoryPage <= 1}
+                    className="px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+                  >
+                    Sebelumnya
+                  </button>
+                  <span className="text-label-sm text-on-surface-variant">
+                    Halaman {safeHistoryPage} dari {totalHistoryPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}
+                    disabled={safeHistoryPage >= totalHistoryPages}
+                    className="px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+                  >
+                    Selanjutnya
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
         </form>
 
         {isRejected && (
