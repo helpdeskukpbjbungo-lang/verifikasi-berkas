@@ -1,7 +1,16 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import Select from 'react-select'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+const FILE_LIMITS = {
+  surat_permohonan: 5 * 1024 * 1024,
+  pakta_integritas: 2 * 1024 * 1024,
+  sk_terbaru: 10 * 1024 * 1024,
+  surat_rekomendasi_ukpbj: 2 * 1024 * 1024,
+  sertifikat_level1: 2 * 1024 * 1024,
+  sk_kpa_sertifikat_pbj: 2 * 1024 * 1024,
+}
 
 export default function PengajuanForm() {
   const [formData, setFormData] = React.useState({
@@ -14,11 +23,56 @@ export default function PengajuanForm() {
   const [fileErrors, setFileErrors] = React.useState({})
   const [submitting, setSubmitting] = React.useState(false)
   const [submitMessage, setSubmitMessage] = React.useState('')
+  const [satkerList, setSatkerList] = React.useState([])
+  const [loadingSatker, setLoadingSatker] = React.useState(true)
+  const [nipError, setNipError] = React.useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const navigate = useNavigate()
+
+  React.useEffect(() => {
+    const loadSatker = async () => {
+      try {
+        const response = await fetch('/api/satker')
+        if (response.ok) {
+          const data = await response.json()
+          setSatkerList(data || [])
+        }
+      } catch (error) {
+        console.error('Error loading satker:', error)
+      } finally {
+        setLoadingSatker(false)
+      }
+    }
+
+    loadSatker()
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleNipChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '')
+    const value = raw.slice(0, 18)
+
+    setFormData((prev) => ({ ...prev, nip: value }))
+
+    if (!value) {
+      setNipError('')
+      return
+    }
+
+    if (value.length !== 18) {
+      setNipError('NIP harus terdiri dari 18 digit angka')
+      return
+    }
+
+    setNipError('')
+  }
+
+  const handleSatkerChange = (selected) => {
+    setFormData((prev) => ({ ...prev, satker: selected ? selected.value : '' }))
   }
 
   const handleFileChange = (jenis, file) => {
@@ -27,8 +81,10 @@ export default function PengajuanForm() {
       delete next[jenis]
       return next
     })
-    if (file && file.size > MAX_FILE_SIZE) {
-      setFileErrors((prev) => ({ ...prev, [jenis]: `Ukuran file melebihi batas maksimal 2MB` }))
+
+    const limit = FILE_LIMITS[jenis] || MAX_FILE_SIZE
+    if (file && file.size > limit) {
+      setFileErrors((prev) => ({ ...prev, [jenis]: `Ukuran file melebihi batas maksimal ${Math.round(limit / 1024 / 1024)}MB` }))
       setFiles((prev) => ({ ...prev, [jenis]: null }))
       return
     }
@@ -47,7 +103,10 @@ export default function PengajuanForm() {
     formData.satker &&
     files['surat_permohonan'] &&
     files['pakta_integritas'] &&
-    files['sk_terbaru']
+    files['sk_terbaru'] &&
+    (formData.jabatan !== 'Pejabat Pengadaan (PP)' || (files['surat_rekomendasi_ukpbj'] && files['sertifikat_level1'])) &&
+    (formData.jabatan !== 'Pejabat Pembuat Komitmen (PPK)' || /kecamatan/i.test(formData.satker || '') || files['sk_kpa_sertifikat_pbj']) &&
+    !nipError
   )
 
   const handleSaveDraft = () => {
@@ -81,12 +140,30 @@ export default function PengajuanForm() {
         }
       })
 
+      console.log('Submitting pengajuan...', {
+        nama_lengkap: formData.nama_lengkap,
+        nip: formData.nip,
+        jabatan: formData.jabatan,
+        satker: formData.satker,
+        files: Object.keys(files).filter(k => files[k])
+      })
+
       const response = await fetch('/api/pengajuan', {
         method: 'POST',
         body: formDataToSend,
       })
 
-      const data = await response.json()
+      console.log('Response status:', response.status)
+
+      let data
+      try {
+        data = await response.json()
+        console.log('Response data:', data)
+      } catch (err) {
+        console.error('Response parse error:', err)
+        setSubmitMessage('Gagal memproses respons server')
+        return
+      }
 
       if (response.ok) {
         setSubmitMessage('Pengajuan berhasil dikirim. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.')
@@ -98,7 +175,7 @@ export default function PengajuanForm() {
         })
         setFiles({})
       } else {
-        setSubmitMessage(data.error || 'Gagal mengirim pengajuan')
+        setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
       }
     } catch (error) {
       console.error('Error submitting pengajuan:', error)
@@ -118,6 +195,20 @@ export default function PengajuanForm() {
             <a className="text-on-surface-variant hover:bg-surface-container-low px-xs py-base transition-colors font-body-md text-body-md cursor-pointer" onClick={() => navigate('/kolom-cek-status')}>Cek Status Pengajuan</a>
           </div>
         </div>
+        <div className="flex items-center gap-md">
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors"
+          >
+            <span className="material-symbols-outlined text-primary">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
+        </div>
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-surface border-b border-outline-variant md:hidden">
+            <a className="block w-full text-left px-md py-sm text-primary font-bold border-b border-outline-variant font-body-md text-body-md" href="#">Formulir Pengajuan</a>
+            <a className="block w-full text-left px-md py-sm text-on-surface-variant hover:bg-surface-container-low font-body-md text-body-md cursor-pointer" onClick={() => { setMobileMenuOpen(false); navigate('/kolom-cek-status') }}>Cek Status Pengajuan</a>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-[1000px] mx-auto px-md py-xl">
@@ -126,20 +217,20 @@ export default function PengajuanForm() {
         <p className="font-body-md text-body-md text-on-surface-variant">Lengkapi data diri dan unggah dokumen pendukung untuk proses verifikasi akun LPSE.</p>
       </header>
 
-      <div className="flex justify-center items-center mb-xl gap-xl">
+      <div className="flex flex-row justify-center items-center mb-xl gap-1 md:gap-xl">
         <div className="flex items-center gap-xs step-active">
-          <span className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-md">1</span>
-          <span className="font-label-md text-label-md">Data Diri</span>
+          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">1</span>
+          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Data Diri</span>
         </div>
-        <div className="w-16 h-px bg-outline-variant"></div>
+        <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
         <div className="flex items-center gap-xs step-inactive">
-          <span className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-md">2</span>
-          <span className="font-label-md text-label-md">Unggah Dokumen</span>
+          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">2</span>
+          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Unggah Dokumen</span>
         </div>
-        <div className="w-16 h-px bg-outline-variant"></div>
+        <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
         <div className="flex items-center gap-xs step-inactive">
-          <span className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-md">3</span>
-          <span className="font-label-md text-label-md">Konfirmasi</span>
+          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">3</span>
+          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Konfirmasi</span>
         </div>
       </div>
 
@@ -161,8 +252,11 @@ export default function PengajuanForm() {
               <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="nip">NIP (Nomor Induk Pegawai)</label>
               <div className="border border-outline-variant rounded-lg p-sm bg-white flex items-center gap-sm form-focus transition-all">
                 <span className="material-symbols-outlined text-outline">fingerprint</span>
-                <input className="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md" id="nip" name="nip" placeholder="Masukkan 18 digit NIP" type="text" value={formData.nip} onChange={handleChange} />
+                <input className="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md" id="nip" name="nip" placeholder="Masukkan 18 digit NIP" type="text" value={formData.nip} onChange={handleNipChange} inputMode="numeric" maxLength={18} />
               </div>
+              {nipError && (
+                <p className="text-[11px] text-error mt-1">{nipError}</p>
+              )}
             </div>
             <div className="space-y-xs">
               <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="jabatan">Jabatan</label>
@@ -170,23 +264,73 @@ export default function PengajuanForm() {
                 <span className="material-symbols-outlined text-outline">work</span>
                 <select className="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md appearance-none" id="jabatan" name="jabatan" value={formData.jabatan} onChange={handleChange}>
                   <option value="">Pilih Jabatan</option>
-                  <option value="Staf Pengelola Pengadaan">Staf Pengelola Pengadaan</option>
-                  <option value="Pejabat Pembuat Komitmen">Pejabat Pembuat Komitmen</option>
-                  <option value="Anggota Pokja Pemilihan">Anggota Pokja Pemilihan</option>
+                  <option value="Pejabat Pengadaan (PP)">Pejabat Pengadaan (PP)</option>
+                  <option value="Pejabat Pembuat Komitmen (PPK)">Pejabat Pembuat Komitmen (PPK)</option>
+                  <option value="Pengguna Anggaran (PA)">Pengguna Anggaran (PA)</option>
                 </select>
               </div>
             </div>
               <div className="space-y-xs">
                 <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="satuan_kerja">Satuan Kerja</label>
-                <div className="border border-outline-variant rounded-lg p-sm bg-white flex items-center gap-sm form-focus transition-all">
-                  <span className="material-symbols-outlined text-outline">corporate_fare</span>
-                  <select className="w-full bg-transparent border-none focus:ring-0 font-body-md text-body-md appearance-none" id="satuan_kerja" name="satker" value={formData.satker} onChange={handleChange}>
-                    <option value="">Pilih Satuan Kerja</option>
-                    <option value="Kementerian Keuangan">Kementerian Keuangan</option>
-                    <option value="Kementerian Pekerjaan Umum">Kementerian Pekerjaan Umum</option>
-                    <option value="Dinas Pendidikan Provinsi">Dinas Pendidikan Provinsi</option>
-                  </select>
-                </div>
+                  <div className="border border-outline-variant rounded-lg p-sm bg-white flex items-center gap-sm form-focus transition-all">
+                    <span className="material-symbols-outlined text-outline">corporate_fare</span>
+                    <Select
+                      id="satuan_kerja"
+                      name="satker"
+                      value={formData.satker ? { value: formData.satker, label: formData.satker } : null}
+                      onChange={handleSatkerChange}
+                      options={satkerList.map(item => ({ value: item.nama, label: item.nama }))}
+                      placeholder="Pilih Satuan Kerja"
+                      isLoading={loadingSatker}
+                      isClearable
+                      styles={{
+                        container: (base) => ({ ...base, flex: 1 }),
+                        control: (base) => ({
+                          ...base,
+                          border: 'none',
+                          boxShadow: 'none',
+                          background: 'transparent',
+                          minHeight: 'auto',
+                          padding: '0',
+                        }),
+                        valueContainer: (base) => ({
+                          ...base,
+                          padding: '0',
+                          margin: '0',
+                        }),
+                        input: (base) => ({
+                          ...base,
+                          margin: '0',
+                          padding: '0',
+                          color: 'inherit',
+                        }),
+                        placeholder: (base) => ({
+                          ...base,
+                          color: '#9e9e9e',
+                        }),
+                        singleValue: (base) => ({
+                          ...base,
+                          color: 'inherit',
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          zIndex: 50,
+                        }),
+                        menuList: (base) => ({
+                          ...base,
+                          maxHeight: '200px',
+                        }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor: state.isFocused ? '#f0f0f0' : state.isSelected ? '#e3f2fd' : 'transparent',
+                          color: state.isSelected ? '#1976d2' : 'inherit',
+                          ':active': {
+                            backgroundColor: '#e3f2fd',
+                          },
+                        }),
+                      }}
+                    />
+                  </div>
               </div>
           </div>
         </section>
@@ -196,15 +340,75 @@ export default function PengajuanForm() {
             <span className="material-symbols-outlined text-secondary">cloud_upload</span>
             <h2 className="font-headline-sm text-headline-sm text-primary">Pusat Unggah Dokumen</h2>
           </div>
-          <div className="space-y-lg">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-md p-md border border-outline-variant border-dashed rounded-lg drop-zone transition-all">
+           <div className="space-y-lg">
+             {formData.jabatan === 'Pejabat Pengadaan (PP)' && (
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-md p-md border border-outline-variant border-dashed rounded-lg drop-zone transition-all">
+                 <div className="flex items-start gap-md">
+                   <div className="bg-secondary-container/20 p-sm rounded-lg">
+                     <span className="material-symbols-outlined text-secondary">verified</span>
+                   </div>
+                   <div>
+                     <p className="font-label-md text-label-md text-primary">Surat Rekomendasi UKPBJ</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-sm">
+                  <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                    Pilih File
+                    <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_rekomendasi_ukpbj', e.target.files[0])} />
+                  </label>
+                  {files['surat_rekomendasi_ukpbj'] && (
+                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      {files['surat_rekomendasi_ukpbj'].name}
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined text-outline cursor-help" title="Surat rekomendasi dari UKPBJ setelah surat permohonan disetujui">info</span>
+                </div>
+                {fileErrors['surat_rekomendasi_ukpbj'] && (
+                  <p className="text-[11px] text-error mt-1">{fileErrors['surat_rekomendasi_ukpbj']}</p>
+                )}
+               </div>
+             )}
+
+             {formData.jabatan === 'Pejabat Pembuat Komitmen (PPK)' && !/kecamatan/i.test(formData.satker || '') && (
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-md p-md border border-outline-variant border-dashed rounded-lg drop-zone transition-all">
+                 <div className="flex items-start gap-md">
+                   <div className="bg-secondary-container/20 p-sm rounded-lg">
+                     <span className="material-symbols-outlined text-secondary">verified</span>
+                   </div>
+                   <div>
+                     <p className="font-label-md text-label-md text-primary">SK KPA / Sertifikat PBJ Level-1</p>
+                   <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 5MB</p>
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-sm">
+                   <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                     Pilih File
+                     <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_kpa_sertifikat_pbj', e.target.files[0])} />
+                   </label>
+                   {files['sk_kpa_sertifikat_pbj'] && (
+                     <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                       <span className="material-symbols-outlined text-sm">check_circle</span>
+                       {files['sk_kpa_sertifikat_pbj'].name}
+                     </span>
+                   )}
+                   <span className="material-symbols-outlined text-outline cursor-help" title="SK KPA atau Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP">info</span>
+                 </div>
+                 {fileErrors['sk_kpa_sertifikat_pbj'] && (
+                   <p className="text-[11px] text-error mt-1">{fileErrors['sk_kpa_sertifikat_pbj']}</p>
+                 )}
+               </div>
+             )}
+
+             <div className="flex flex-col md:flex-row md:items-center justify-between gap-md p-md border border-outline-variant border-dashed rounded-lg drop-zone transition-all">
               <div className="flex items-start gap-md">
                 <div className="bg-secondary-container/20 p-sm rounded-lg">
                   <span className="material-symbols-outlined text-secondary">description</span>
                 </div>
                 <div>
                   <p className="font-label-md text-label-md text-primary">Surat Permohonan Verifikasi</p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 5MB</p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
                 </div>
               </div>
               <div className="flex items-center gap-sm">
@@ -246,7 +450,7 @@ export default function PengajuanForm() {
                     {files['pakta_integritas'].name}
                   </span>
                 )}
-                <span className="material-symbols-outlined text-outline cursor-help" title="Sesuai format standar LPSE yang berlaku">info</span>
+                <span className="material-symbols-outlined text-outline cursor-help" title="Pakta Integritas yang sudah ditandatangani diatas Materai 10.000">info</span>
               </div>
               {fileErrors['pakta_integritas'] && (
                 <p className="text-[11px] text-error mt-1">{fileErrors['pakta_integritas']}</p>
@@ -259,7 +463,7 @@ export default function PengajuanForm() {
                   <span className="material-symbols-outlined text-secondary">assignment_ind</span>
                 </div>
                 <div>
-                  <p className="font-label-md text-label-md text-primary">SK Jabatan Terakhir</p>
+                  <p className="font-label-md text-label-md text-primary">SK PP/PPK/PA Terbaru</p>
                   <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 10MB</p>
                 </div>
               </div>
@@ -274,12 +478,42 @@ export default function PengajuanForm() {
                     {files['sk_terbaru'].name}
                   </span>
                 )}
-                <span className="material-symbols-outlined text-outline cursor-help" title="Salinan legalisir SK pengangkatan terakhir">info</span>
+                <span className="material-symbols-outlined text-outline cursor-help" title="Scan Asli SK Pengangkatan sebagai PP/PPK/PA">info</span>
               </div>
               {fileErrors['sk_terbaru'] && (
                 <p className="text-[11px] text-error mt-1">{fileErrors['sk_terbaru']}</p>
               )}
             </div>
+
+             {formData.jabatan === 'Pejabat Pengadaan (PP)' && (
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-md p-md border border-outline-variant border-dashed rounded-lg drop-zone transition-all">
+                 <div className="flex items-start gap-md">
+                   <div className="bg-secondary-container/20 p-sm rounded-lg">
+                     <span className="material-symbols-outlined text-secondary">verified</span>
+                   </div>
+                   <div>
+                    <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-sm">
+                  <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                    Pilih File
+                    <input className="hidden" type="file" onChange={(e) => handleFileChange('sertifikat_level1', e.target.files[0])} />
+                  </label>
+                  {files['sertifikat_level1'] && (
+                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      {files['sertifikat_level1'].name}
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined text-outline cursor-help" title="Sertifikat Level 1 yang dikeluarkan oleh LKPP">info</span>
+                </div>
+                {fileErrors['sertifikat_level1'] && (
+                  <p className="text-[11px] text-error mt-1">{fileErrors['sertifikat_level1']}</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
 

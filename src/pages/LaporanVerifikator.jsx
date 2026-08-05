@@ -1,20 +1,29 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import ProfilPopup from '../components/ProfilPopup'
 
 export default function LaporanVerifikator() {
   const [pengajuanList, setPengajuanList] = React.useState([])
   const [statusFilter, setStatusFilter] = React.useState('all')
-  const { user } = useAuth()
+  const [reportPage, setReportPage] = React.useState(1)
+  const REPORT_PER_PAGE = 5
+  const [profileOpen, setProfileOpen] = React.useState(false)
+  const { user, loading } = useAuth()
   const navigate = useNavigate()
 
   React.useEffect(() => {
+    if (loading) return
     if (!user) {
-      navigate('/login/verifikator')
+      navigate('/loginverifikator')
       return
     }
     loadData()
-  }, [user, navigate])
+  }, [user, loading, navigate])
+
+  React.useEffect(() => {
+    setReportPage(1)
+  }, [statusFilter])
 
   const loadData = async () => {
     const response = await fetch('/api/pengajuan')
@@ -27,6 +36,10 @@ export default function LaporanVerifikator() {
   const filtered = statusFilter === 'all'
     ? pengajuanList
     : pengajuanList.filter(item => item.status === statusFilter)
+
+  React.useEffect(() => {
+    setReportPage(1)
+  }, [statusFilter])
 
   const stats = {
     total: pengajuanList.length,
@@ -96,13 +109,34 @@ export default function LaporanVerifikator() {
       .slice(0, 2)
   }
 
-  const recentActivities = pengajuanList
-    .filter(i => i.status !== 'submitted' && i.status !== 'draft')
-    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-    .slice(0, 5)
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/pengajuan/export/xlsx')
+      if (!response.ok) {
+        throw new Error('Export failed')
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `rekap-pengajuan-${new Date().toISOString().slice(0, 10)}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Gagal mengekspor data:', err)
+      alert('Gagal mengunduh rekap. Silakan coba lagi.')
+    }
+  }
+
+  const totalReportPages = Math.max(1, Math.ceil(filtered.length / REPORT_PER_PAGE))
+  const safeReportPage = Math.min(reportPage, totalReportPages)
+  const reportStartIdx = (safeReportPage - 1) * REPORT_PER_PAGE
+  const paginatedReport = filtered.slice(reportStartIdx, reportStartIdx + REPORT_PER_PAGE)
 
   return (
-    <div>
+    <div className="pb-16 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
         <div>
           <h2 className="font-headline-lg text-headline-lg text-primary mb-xs">Ringkasan Laporan</h2>
@@ -116,56 +150,26 @@ export default function LaporanVerifikator() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
-        <div className="bg-white p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-md font-bold text-on-surface-variant mb-xs">Total Pengajuan</p>
-          <div className="flex items-baseline gap-sm">
-            <span className="text-headline-lg font-black text-primary">{String(stats.total).padStart(2, '0')}</span>
-            <span className="text-label-sm text-on-surface-variant">Total berkas masuk</span>
-          </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-md mb-xl">
+        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Total Pengajuan</p>
+          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-primary">{String(stats.total).padStart(2, '0')}</h3>
         </div>
-        <div className="bg-white p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-md font-bold text-on-surface-variant mb-xs">Menunggu Verifikasi</p>
-          <div className="flex items-baseline gap-sm">
-            <span className="text-headline-lg font-black text-secondary">{String(stats.pending).padStart(2, '0')}</span>
-            <span className="text-label-sm text-on-surface-variant">Perlu ditindaklanjuti</span>
-          </div>
-          <div className="mt-md h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-            <div
-              className="h-full bg-secondary transition-all duration-500"
-              style={{ width: `${stats.total ? ((stats.pending / stats.total) * 100) : 0}%` }}
-            ></div>
-          </div>
+        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Menunggu</p>
+          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-secondary">{String(stats.pending).padStart(2, '0')}</h3>
         </div>
-        <div className="bg-white p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-md font-bold text-on-surface-variant mb-xs">Terverifikasi</p>
-          <div className="flex items-baseline gap-sm">
-            <span className="text-headline-lg font-black text-green-700">{String(stats.verified).padStart(2, '0')}</span>
-            <span className="text-label-sm text-green-600">Berhasil diverifikasi</span>
-          </div>
-          <div className="mt-md h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 transition-all duration-500"
-              style={{ width: `${stats.total ? ((stats.verified / stats.total) * 100) : 0}%` }}
-            ></div>
-          </div>
+        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Terverifikasi</p>
+          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-green-700">{String(stats.verified).padStart(2, '0')}</h3>
         </div>
-        <div className="bg-white p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-md font-bold text-on-surface-variant mb-xs">Ditolak</p>
-          <div className="flex items-baseline gap-sm">
-            <span className="text-headline-lg font-black text-error">{String(stats.rejected).padStart(2, '0')}</span>
-            <span className="text-label-sm text-on-surface-variant">Membutuhkan perbaikan</span>
-          </div>
-          <div className="mt-md h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-            <div
-              className="h-full bg-error transition-all duration-500"
-              style={{ width: `${stats.total ? ((stats.rejected / stats.total) * 100) : 0}%` }}
-            ></div>
-          </div>
+        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
+          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Ditolak</p>
+          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-error">{String(stats.rejected).padStart(2, '0')}</h3>
         </div>
       </div>
 
-      <div className="bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+       <div className="max-w-[950px] mx-auto bg-white border border-outline-variant rounded-xl overflow-hidden shadow-sm mb-xl">
         <div className="p-md md:p-lg border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-md bg-surface-container-lowest">
           <div>
             <h3 className="text-headline-sm font-headline-sm text-primary">Detail Laporan Verifikasi</h3>
@@ -182,152 +186,139 @@ export default function LaporanVerifikator() {
               <option value="verified">Terverifikasi</option>
               <option value="rejected">Ditolak</option>
             </select>
-            <button className="flex items-center gap-xs px-md py-sm bg-surface border border-outline-variant rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">
+            <button onClick={handleExport} className="flex items-center gap-xs px-md py-sm bg-primary text-on-primary rounded-lg font-label-md hover:bg-primary-container transition-colors">
               <span className="material-symbols-outlined text-sm">download</span>
-              Ekspor
+              Unduh Rekap
             </button>
           </div>
         </div>
 
+        
+
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-surface-container-low text-label-md text-primary font-bold uppercase tracking-wider sticky top-0">
-              <tr>
-                <th className="px-md py-sm border-b border-outline-variant">Pemohon</th>
-                <th className="px-md py-sm border-b border-outline-variant">Instansi</th>
-                <th className="px-md py-sm border-b border-outline-variant">Jabatan</th>
-                <th className="px-md py-sm border-b border-outline-variant">Tanggal Pengajuan</th>
-                <th className="px-md py-sm border-b border-outline-variant">Tanggal Selesai</th>
-                <th className="px-md py-sm border-b border-outline-variant text-center">Status</th>
-                <th className="px-md py-sm border-b border-outline-variant text-right">Waktu Proses</th>
-              </tr>
-            </thead>
-            <tbody className="text-body-sm text-on-surface divide-y divide-outline-variant">
-              {filtered.length === 0 ? (
+          <div className="inline-block min-w-full align-middle">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-surface-container-low text-label-md text-primary font-bold uppercase tracking-wider sticky top-0">
                 <tr>
-                  <td colSpan={7} className="px-md py-md text-center text-on-surface-variant">
-                    Tidak ada data laporan untuk filter ini.
-                  </td>
+                  <th className="pl-4 md:pl-md pr-2 md:pr-md py-sm border-b border-outline-variant">Pemohon</th>
+                  <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Instansi</th>
+                  <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Jabatan</th>
+                  <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Tgl Pengajuan</th>
+                  <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Tgl Selesai</th>
+                  <th className="px-2 md:px-md py-sm border-b border-outline-variant text-center">Status</th>
+                  <th className="pl-4 md:pl-md pr-2 md:pr-md py-sm border-b border-outline-variant text-right">Waktu Proses</th>
                 </tr>
-              ) : (
-                filtered.map(item => (
-                  <tr key={item.id} className="hover:bg-surface-container-low transition-colors group">
-                    <td className="px-md py-md">
-                      <div className="flex items-center gap-sm">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                            item.status === 'verified'
-                              ? 'bg-green-100 text-green-700'
-                              : item.status === 'rejected'
-                                ? 'bg-error-container text-on-error-container'
-                                : 'bg-secondary-fixed text-secondary'
-                          }`}
-                        >
-                          {getInitials(item.nama_lengkap)}
-                        </div>
-                        <div>
-                          <p className="font-bold">{item.nama_lengkap}</p>
-                          <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-md py-md">{item.satker || '-'}</td>
-                    <td className="px-md py-md">{item.jabatan || '-'}</td>
-                    <td className="px-md py-md">{formatDateTime(item.created_at)}</td>
-                    <td className="px-md py-md">
-                      {item.status === 'submitted' || item.status === 'draft' ? '-' : formatDateTime(item.updated_at)}
-                    </td>
-                    <td className="px-md py-md text-center">
-                      <span
-                        className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status)}`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            item.status === 'verified'
-                              ? 'bg-green-500'
-                              : item.status === 'rejected'
-                                ? 'bg-error'
-                                : 'bg-secondary'
-                          }`}
-                        ></span>
-                        {getStatusLabel(item.status)}
-                      </span>
-                    </td>
-                    <td className="px-md py-md text-right text-label-sm text-on-surface-variant">
-                      {item.status === 'verified' || item.status === 'rejected'
-                        ? getProcessingDays(item.created_at, item.updated_at)
-                        : '-'}
+              </thead>
+              <tbody className="text-body-sm text-on-surface divide-y divide-outline-variant">
+                {paginatedReport.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-2 md:px-md py-sm text-center text-on-surface-variant">
+                      Tidak ada data laporan untuk filter ini.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  paginatedReport.map(item => (
+                    <tr key={item.id} className="hover:bg-surface-container-low transition-colors group">
+                       <td className="pl-4 md:pl-md pr-2 md:pr-md py-sm">
+                         <div className="min-w-0">
+                           <p className="font-bold truncate">{item.nama_lengkap}</p>
+                           <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
+                         </div>
+                       </td>
+                      <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.satker || '-'}</td>
+                      <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
+                      <td className="px-2 md:px-md py-sm hidden sm:table-cell">{formatDateTime(item.created_at)}</td>
+                      <td className="px-2 md:px-md py-sm hidden sm:table-cell">
+                        {item.status === 'submitted' || item.status === 'draft' ? '-' : formatDateTime(item.updated_at)}
+                      </td>
+                      <td className="px-2 md:px-md py-sm text-center">
+                        <span
+                          className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status)}`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              item.status === 'verified'
+                                ? 'bg-green-500'
+                                : item.status === 'rejected'
+                                  ? 'bg-error'
+                                  : 'bg-secondary'
+                            }`}
+                          ></span>
+                          {getStatusLabel(item.status)}
+                        </span>
+                      </td>
+                      <td className="pl-4 md:pl-md pr-2 md:pr-md py-sm text-right text-label-sm text-on-surface-variant">
+                        {item.status === 'verified' || item.status === 'rejected'
+                          ? getProcessingDays(item.created_at, item.updated_at)
+                          : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div className="p-md bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
-          <p className="text-label-sm text-on-surface-variant">Menampilkan {filtered.length} dari {pengajuanList.length} permohonan</p>
-        </div>
-      </div>
-
-      <div className="mt-xl grid grid-cols-1 lg:grid-cols-2 gap-lg">
-        <div className="bg-primary-container text-on-primary p-lg rounded-xl flex flex-col gap-lg items-center relative overflow-hidden">
-          <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-white opacity-5 rounded-full blur-2xl"></div>
-          <div className="flex-1 z-10">
-            <h4 className="text-headline-sm font-bold mb-xs">Ringkasan Performa</h4>
-            <p className="text-body-sm text-on-primary-container mb-md">
-              Tingkat penyelesaian verifikasi mencapai {stats.total ? ((stats.verified / stats.total) * 100).toFixed(0) : 0}%. Pertahankan konsistensi kerja Anda.
-            </p>
-            <div className="flex gap-sm">
+        <div className="p-md bg-surface-container-low border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0">
+          <p className="text-label-xs md:text-label-sm text-on-surface-variant text-center md:text-left">Menampilkan {paginatedReport.length} dari {filtered.length} permohonan</p>
+          {totalReportPages > 1 && (
+            <div className="flex items-center gap-1 md:gap-base">
               <button
-                onClick={() => setStatusFilter('all')}
-                className="bg-white text-primary px-md py-sm rounded-lg font-label-md flex items-center gap-xs hover:bg-surface-container-lowest transition-all"
+                type="button"
+                onClick={() => setReportPage((p) => Math.max(1, p - 1))}
+                disabled={safeReportPage <= 1}
+                className="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-white text-on-surface-variant disabled:opacity-50 hover:bg-surface-container transition-colors"
               >
-                <span className="material-symbols-outlined text-sm">visibility</span>
-                Lihat Semua
+                <span className="material-symbols-outlined text-sm">chevron_left</span>
               </button>
+              {Array.from({ length: totalReportPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setReportPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded text-label-sm font-bold ${
+                    page === safeReportPage
+                      ? 'bg-primary text-on-primary'
+                      : 'border border-outline-variant bg-white text-on-surface-variant hover:bg-surface-container transition-colors'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
               <button
-                onClick={() => setStatusFilter('verified')}
-                className="bg-surface-container bg-opacity-20 text-on-primary px-md py-sm rounded-lg font-label-md flex items-center gap-xs hover:bg-opacity-30 transition-all"
+                type="button"
+                onClick={() => setReportPage((p) => Math.min(totalReportPages, p + 1))}
+                disabled={safeReportPage >= totalReportPages}
+                className="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-white text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
               >
-                <span className="material-symbols-outlined text-sm">check_circle</span>
-                Verifikasi Selesai
+                <span className="material-symbols-outlined text-sm">chevron_right</span>
               </button>
             </div>
-          </div>
-        </div>
-        <div className="bg-white border border-outline-variant p-lg rounded-xl shadow-sm">
-          <h4 className="text-headline-sm font-bold text-primary mb-md">Aktivitas Terbaru</h4>
-          <div className="space-y-md">
-            {recentActivities.length === 0 ? (
-              <p className="text-body-sm text-on-surface-variant">Belum ada aktivitas verifikasi.</p>
-            ) : (
-              recentActivities.map(item => (
-                <div key={item.id} className="flex gap-sm">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                      item.status === 'verified' ? 'bg-green-100 text-green-600' : 'bg-error-container text-on-error-container'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      {item.status === 'verified' ? 'check_circle' : 'cancel'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-body-sm font-bold">
-                      {item.status === 'verified' ? 'Verifikasi Berhasil' : 'Pengajuan Ditolak'}
-                    </p>
-                    <p className="text-xs text-on-surface-variant">
-                      Permohonan {item.nama_lengkap} ({item.id.slice(0, 8).toUpperCase()})
-                    </p>
-                    <p className="text-[10px] text-outline mt-1">{formatDateTime(item.updated_at)}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Mobile Nav Bar (Bottom) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around items-center py-xs z-50">
+        <button onClick={() => navigate('/verifikator')} className="flex flex-col items-center gap-1 text-on-surface-variant">
+          <span className="material-symbols-outlined">dashboard</span>
+          <span className="text-[10px]">Beranda</span>
+        </button>
+        <button onClick={() => navigate('/pengajuan-masuk')} className="flex flex-col items-center gap-1 text-on-surface-variant">
+          <span className="material-symbols-outlined">description</span>
+          <span className="text-[10px]">Berkas</span>
+        </button>
+        <button onClick={() => {}} className="flex flex-col items-center gap-1 text-primary">
+          <span className="material-symbols-outlined">history</span>
+          <span className="text-[10px] font-bold">Riwayat</span>
+        </button>
+        <button onClick={() => setProfileOpen((prev) => !prev)} className="flex flex-col items-center gap-1 text-on-surface-variant relative">
+          <span className="material-symbols-outlined">person</span>
+          <span className="text-[10px]">Profil</span>
+        </button>
+      </nav>
+
+      <ProfilPopup open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }

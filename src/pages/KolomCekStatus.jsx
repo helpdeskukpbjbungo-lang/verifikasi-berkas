@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 export default function KolomCekStatus() {
   const navigate = useNavigate()
   const [nip, setNip] = React.useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
   const handleSearch = (e) => {
     e.preventDefault()
     if (nip.trim()) {
@@ -21,8 +22,19 @@ export default function KolomCekStatus() {
           </div>
         </div>
         <div className="flex items-center gap-md">
-          <div className="flex items-center gap-sm"></div>
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors"
+          >
+            <span className="material-symbols-outlined text-primary">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
         </div>
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-surface border-b border-outline-variant md:hidden">
+            <a className="block w-full text-left px-md py-sm text-on-surface-variant hover:bg-surface-container-low font-body-md text-body-md cursor-pointer" onClick={() => { setMobileMenuOpen(false); navigate('/') }}>Formulir Pengajuan</a>
+            <a className="block w-full text-left px-md py-sm text-primary font-bold border-b border-outline-variant font-body-md text-body-md" href="#">Cek Status Pengajuan</a>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-[1000px] mx-auto px-md py-xl">

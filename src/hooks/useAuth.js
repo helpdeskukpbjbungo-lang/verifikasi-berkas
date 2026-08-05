@@ -1,12 +1,35 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+const STORAGE_KEY = 'lpse_auth_user'
+
+function getStoredUser() {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function setStoredUser(user) {
+  if (typeof window === 'undefined') return
+  if (user) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+  } else {
+    window.localStorage.removeItem(STORAGE_KEY)
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!supabase) {
+      const stored = getStoredUser()
+      if (stored) setUser(stored)
       setLoading(false)
       return
     }
@@ -14,9 +37,16 @@ export function useAuth() {
     const getSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        setUser(session?.user ?? null)
+        if (session?.user) {
+          setUser(session.user)
+          setStoredUser(session.user)
+        } else {
+          const stored = getStoredUser()
+          if (stored) setUser(stored)
+        }
       } catch (error) {
-        console.error('Error getting session:', error)
+        const stored = getStoredUser()
+        if (stored) setUser(stored)
       } finally {
         setLoading(false)
       }
@@ -26,7 +56,18 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null)
+        if (session?.user) {
+          setUser(session.user)
+          setStoredUser(session.user)
+        } else {
+          const stored = getStoredUser()
+          if (stored) {
+            setUser(stored)
+          } else {
+            setUser(null)
+            setStoredUser(null)
+          }
+        }
         setLoading(false)
       }
     )
@@ -91,7 +132,40 @@ export function useAuth() {
     }
   }
 
+  const signInWithDb = async (email, password) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || result.error) {
+        return { error: { message: result.error || 'Gagal login' } }
+      }
+
+      const dbUser = {
+        id: result.data.id,
+        email: result.data.email,
+        nama_lengkap: result.data.nama_lengkap,
+        role: result.data.role || 'verifikator',
+      }
+
+      setUser(dbUser)
+      setStoredUser(dbUser)
+
+      return { data: dbUser, error: null }
+    } catch (err) {
+      console.error('DB login error:', err)
+      return { error: { message: 'Gagal terhubung ke server' } }
+    }
+  }
+
   const signOut = async () => {
+    setUser(null)
+    setStoredUser(null)
     if (!supabase) {
       return { error: { message: 'Supabase belum dikonfigurasi' } }
     }
@@ -100,5 +174,5 @@ export function useAuth() {
     return error
   }
 
-  return { user, loading, signIn, signOut }
+  return { user, loading, signIn, signInWithDb, signOut }
 }

@@ -4,6 +4,7 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import pengajuanRoutes from './routes/pengajuan.js'
+import authRoutes from './routes/auth.js'
 
 dotenv.config()
 
@@ -16,9 +17,17 @@ app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
 app.use('/api', pengajuanRoutes)
+app.use('/api/auth', authRoutes)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled error:', err)
+  const status = err.statusCode || 500
+  const message = err.message || 'Terjadi kesalahan server'
+  res.status(status).json({ error: message })
 })
 
 const server = app.listen(PORT, () => {

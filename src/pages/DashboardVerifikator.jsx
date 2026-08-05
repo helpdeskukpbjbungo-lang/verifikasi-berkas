@@ -89,10 +89,17 @@ export default function DashboardVerifikator() {
     }
   }
 
-  const recentActivities = pengajuanList
-    .filter(i => i.status !== 'submitted' && i.status !== 'draft')
-    .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-    .slice(0, 5)
+   const [activityPage, setActivityPage] = React.useState(1)
+   const ACTIVITY_PER_PAGE = 3
+
+   const allActivities = pengajuanList
+     .filter(i => i.status !== 'submitted' && i.status !== 'draft')
+     .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+
+   const totalActivityPages = Math.max(1, Math.ceil(allActivities.length / ACTIVITY_PER_PAGE))
+   const safeActivityPage = Math.min(activityPage, totalActivityPages)
+   const activityStartIdx = (safeActivityPage - 1) * ACTIVITY_PER_PAGE
+   const paginatedActivities = allActivities.slice(activityStartIdx, activityStartIdx + ACTIVITY_PER_PAGE)
 
   return (
     <div>
@@ -110,8 +117,8 @@ export default function DashboardVerifikator() {
         </div>
       </div>
 
-      {/* Stats Grid (Bento Style) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-md mb-xl">
+       {/* Stats Grid (Bento Style) */}
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-sm mb-xl">
         {/* Stat 1 */}
         <div className="bg-white p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -208,101 +215,124 @@ export default function DashboardVerifikator() {
         {/* Laporan Verifikasi Bulanan */}
         <div className="bg-white border border-outline-variant rounded-xl p-lg shadow-sm">
           <h3 className="text-headline-sm font-headline-sm text-primary mb-md">Laporan Verifikasi Bulanan</h3>
-          <div className="flex items-end justify-between gap-sm h-48">
-            {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((month, idx) => {
-              const monthData = pengajuanList.filter(item => {
-                if (!item.created_at) return false
-                const date = new Date(item.created_at)
-                return date.getMonth() === idx
-              })
-              const verified = monthData.filter(i => i.status === 'verified').length
-              const rejected = monthData.filter(i => i.status === 'rejected').length
-              const total = monthData.length
-              const maxVal = Math.max(total, 1)
-              return (
-                <div key={month} className="flex-1 flex flex-col items-center gap-xs">
-                  <div className="w-full flex flex-col items-center gap-1">
-                    <span className="text-[10px] font-bold text-on-surface-variant">{total}</span>
-                    <div className="w-full rounded-t-md relative" style={{ height: `${Math.max(8, (total / maxVal) * 100)}%`, minHeight: '8px' }}>
-                      <div className="absolute bottom-0 left-0 right-0 bg-primary rounded-t-md" style={{ height: `${total ? (verified / total) * 100 : 0}%` }}></div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-error rounded-b-md" style={{ height: `${total ? (rejected / total) * 100 : 0}%` }}></div>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-on-surface-variant font-medium">{month}</span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="flex items-center justify-center gap-md mt-md">
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm bg-primary"></span>
-              <span className="text-[10px] text-on-surface-variant">Terverifikasi</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-3 h-3 rounded-sm bg-error"></span>
-              <span className="text-[10px] text-on-surface-variant">Ditolak</span>
-            </div>
-          </div>
+           <div className="flex items-end justify-between gap-1 h-32 md:h-48 overflow-x-auto">
+             {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((month, idx) => {
+               const monthData = pengajuanList.filter(item => {
+                 if (!item.created_at) return false
+                 const date = new Date(item.created_at)
+                 return date.getMonth() === idx
+               })
+               const verified = monthData.filter(i => i.status === 'verified').length
+               const rejected = monthData.filter(i => i.status === 'rejected').length
+               const total = monthData.length
+               const maxVal = Math.max(total, 1)
+               return (
+                 <div key={month} className="flex-1 min-w-[12px] md:min-w-[20px] flex flex-col items-center gap-0.5">
+                   <div className="w-full flex flex-col items-center">
+                     <span className="text-[9px] md:text-[10px] font-bold text-on-surface-variant">{total}</span>
+                     <div className="w-full rounded-t-sm relative" style={{ height: `${Math.max(4, (total / maxVal) * 100)}%`, minHeight: '4px' }}>
+                       <div className="absolute bottom-0 left-0 right-0 bg-primary rounded-t-sm" style={{ height: `${total ? (verified / total) * 100 : 0}%` }}></div>
+                       <div className="absolute bottom-0 left-0 right-0 bg-error rounded-b-sm" style={{ height: `${total ? (rejected / total) * 100 : 0}%` }}></div>
+                     </div>
+                   </div>
+                   <span className="text-[9px] md:text-[10px] text-on-surface-variant font-medium">{month}</span>
+                 </div>
+               )
+             })}
+           </div>
+           <div className="flex items-center justify-center gap-2 mt-sm">
+             <div className="flex items-center gap-1">
+               <span className="w-2 h-2 md:w-3 md:h-3 rounded-sm bg-primary"></span>
+               <span className="text-[9px] md:text-[10px] text-on-surface-variant">Terverifikasi</span>
+             </div>
+             <div className="flex items-center gap-1">
+               <span className="w-2 h-2 md:w-3 md:h-3 rounded-sm bg-error"></span>
+               <span className="text-[9px] md:text-[10px] text-on-surface-variant">Ditolak</span>
+             </div>
+           </div>
         </div>
       </div>
 
-      {/* Activity Feed */}
-      <div className="mt-xl mb-xl">
+        {/* Activity Feed */}
+        <div className="mt-xl mb-xl md:mb-xl pb-md md:pb-0">
         <div className="bg-white border border-outline-variant p-lg rounded-xl shadow-sm">
           <h4 className="text-headline-sm font-bold text-primary mb-md">Aktivitas Terbaru</h4>
-          <div className="space-y-md">
-            {recentActivities.length === 0 ? (
-              <p className="text-body-sm text-on-surface-variant">Belum ada aktivitas verifikasi.</p>
-            ) : (
-              recentActivities.map(item => (
-                <div key={item.id} className="flex gap-sm items-start">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                      item.status === 'verified' ? 'bg-green-100 text-green-600' : 'bg-error-container text-on-error-container'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      {item.status === 'verified' ? 'check_circle' : 'cancel'}
-                    </span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-body-sm font-bold">
-                      {item.status === 'verified' ? 'Verifikasi Berhasil' : 'Pengajuan Ditolak'}
-                    </p>
-                    <p className="text-xs text-on-surface-variant">
-                      Permohonan {item.nama_lengkap} ({item.id.slice(0, 8).toUpperCase()})
-                    </p>
-                    <p className="text-[10px] text-outline mt-1">{formatDateTime(item.updated_at)}</p>
-                  </div>
-                  <button className="px-md py-xs bg-primary text-on-primary text-label-sm rounded-lg hover:bg-primary-container transition-all flex-shrink-0">
-                    Lihat
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+           <div className="space-y-md">
+             {paginatedActivities.length === 0 ? (
+               <p className="text-body-sm text-on-surface-variant">Belum ada aktivitas verifikasi.</p>
+             ) : (
+               paginatedActivities.map(item => (
+                 <div key={item.id} className="flex gap-sm items-start">
+                   <div
+                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
+                       item.status === 'verified' ? 'bg-green-100 text-green-600' : 'bg-error-container text-on-error-container'
+                     }`}
+                   >
+                     <span className="material-symbols-outlined text-sm">
+                       {item.status === 'verified' ? 'check_circle' : 'cancel'}
+                     </span>
+                   </div>
+                   <div className="flex-1">
+                     <p className="text-body-sm font-bold">
+                       {item.status === 'verified' ? 'Verifikasi Berhasil' : 'Pengajuan Ditolak'}
+                     </p>
+                     <p className="text-xs text-on-surface-variant">
+                       Permohonan {item.nama_lengkap} ({item.id.slice(0, 8).toUpperCase()})
+                     </p>
+                     <p className="text-[10px] text-outline mt-1">{formatDateTime(item.updated_at)}</p>
+                   </div>
+                   <button className="px-md py-xs bg-primary text-on-primary text-label-sm rounded-lg hover:bg-primary-container transition-all flex-shrink-0">
+                     Lihat
+                   </button>
+                 </div>
+               ))
+             )}
+           </div>
+           {totalActivityPages > 1 && (
+             <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0 mt-md pt-md border-t border-outline-variant">
+               <button
+                 type="button"
+                 onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                 disabled={safeActivityPage <= 1}
+                 className="w-full md:w-auto px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+               >
+                 Sebelumnya
+               </button>
+               <span className="text-label-sm text-on-surface-variant">
+                 Halaman {safeActivityPage} dari {totalActivityPages}
+               </span>
+               <button
+                 type="button"
+                 onClick={() => setActivityPage((p) => Math.min(totalActivityPages, p + 1))}
+                 disabled={safeActivityPage >= totalActivityPages}
+                 className="w-full md:w-auto px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+               >
+                 Selanjutnya
+               </button>
+             </div>
+           )}
         </div>
       </div>
 
-      {/* Mobile Nav Bar (Bottom) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around items-center py-xs z-50">
-        <a className="flex flex-col items-center gap-1 text-primary" href="#">
-          <span className="material-symbols-outlined">dashboard</span>
-          <span className="text-[10px] font-bold">Beranda</span>
-        </a>
-        <a className="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
-          <span className="material-symbols-outlined">description</span>
-          <span className="text-[10px]">Berkas</span>
-        </a>
-        <a className="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
-          <span className="material-symbols-outlined">history</span>
-          <span className="text-[10px]">Riwayat</span>
-        </a>
-        <a className="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
-          <span className="material-symbols-outlined">person</span>
-          <span className="text-[10px]">Profil</span>
-        </a>
-      </nav>
+       {/* Mobile Nav Bar (Bottom) */}
+       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-outline-variant flex justify-around items-center py-xs z-50">
+         <button onClick={() => navigate('/verifikator')} className="flex flex-col items-center gap-1 text-primary">
+           <span className="material-symbols-outlined">dashboard</span>
+           <span className="text-[10px] font-bold">Beranda</span>
+         </button>
+         <button onClick={() => navigate('/pengajuan-masuk')} className="flex flex-col items-center gap-1 text-on-surface-variant">
+           <span className="material-symbols-outlined">description</span>
+           <span className="text-[10px]">Berkas</span>
+         </button>
+         <button onClick={() => navigate('/laporanverifikator')} className="flex flex-col items-center gap-1 text-on-surface-variant">
+           <span className="material-symbols-outlined">history</span>
+           <span className="text-[10px]">Riwayat</span>
+         </button>
+         <button onClick={() => navigate('/profil')} className="flex flex-col items-center gap-1 text-on-surface-variant">
+           <span className="material-symbols-outlined">person</span>
+           <span className="text-[10px]">Profil</span>
+         </button>
+       </nav>
     </div>
   )
 }

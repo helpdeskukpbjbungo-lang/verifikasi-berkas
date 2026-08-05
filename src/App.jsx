@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import TopNavBar from './components/TopNavBar'
 import SideNavBar from './components/SideNavBar'
 import PengajuanForm from './pages/PengajuanForm'
+import EditPengajuan from './pages/EditPengajuan'
 import CekStatus from './pages/CekStatus'
 import KolomCekStatus from './pages/KolomCekStatus'
 import LoginVerifikator from './pages/LoginVerifikator'
@@ -10,6 +11,7 @@ import DashboardVerifikator from './pages/DashboardVerifikator'
 import PengajuanMasuk from './pages/PengajuanMasuk'
 import DetailPengajuan from './pages/DetailPengajuan'
 import LaporanVerifikator from './pages/LaporanVerifikator'
+import ProfilVerifikator from './pages/ProfilVerifikator'
 
 function ProtectedRoute({ children }) {
   return children
@@ -28,9 +30,9 @@ function AppLayout({ children }) {
   return (
     <div className="min-h-screen bg-background text-on-surface">
       <TopNavBar onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
-      <div className="flex min-h-[calc(100vh-64px)]">
+      <div className="flex min-h-screen pt-16">
         <SideNavBar open={sidebarOpen} onClose={closeSidebar} />
-        <main className="flex-1 bg-background pt-6 px-4 md:px-6 md:ml-72">
+        <main className="flex-1 bg-background px-4 md:px-6 md:ml-72">
           {children}
         </main>
       </div>
@@ -49,7 +51,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/login/verifikator" element={
+        <Route path="/loginverifikator" element={
           <PublicRoute>
             <LoginVerifikator />
           </PublicRoute>
@@ -77,10 +79,17 @@ function App() {
             </AppLayout>
           </ProtectedRoute>
         } />
-        <Route path="/verifikator/laporan" element={
+        <Route path="/laporanverifikator" element={
           <ProtectedRoute>
             <AppLayout>
               <LaporanVerifikator />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/profil" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <ProfilVerifikator />
             </AppLayout>
           </ProtectedRoute>
         } />
@@ -89,6 +98,11 @@ function App() {
         <Route path="/" element={
           <PublicRoute>
             <PengajuanForm />
+          </PublicRoute>
+        } />
+        <Route path="/edit-pengajuan/:id" element={
+          <PublicRoute>
+            <EditPengajuan />
           </PublicRoute>
         } />
 

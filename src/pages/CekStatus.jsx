@@ -11,6 +11,7 @@ export default function CekStatus() {
   const [error, setError] = React.useState(false)
   const [historyPage, setHistoryPage] = React.useState(1)
   const HISTORY_PER_PAGE = 2
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
   React.useEffect(() => {
     if (!nip) return
@@ -127,6 +128,9 @@ export default function CekStatus() {
   const isRevisionRequested = (item) => item.status === 'submitted' && !!item.alasan_revisi
 
   const getStatusBadge = (item) => {
+    if (item.status === 'submitted' && item.revisi_selesai) {
+      return 'bg-green-50 text-green-700 border border-green-200'
+    }
     if (isRevisionRequested(item)) {
       return 'bg-orange-50 text-orange-700 border border-orange-200'
     }
@@ -143,6 +147,9 @@ export default function CekStatus() {
   }
 
   const getStatusLabel = (item) => {
+    if (item.status === 'submitted' && item.revisi_selesai) {
+      return 'Selesai Diperbaiki'
+    }
     if (isRevisionRequested(item)) {
       return 'Minta Revisi'
     }
@@ -174,6 +181,22 @@ export default function CekStatus() {
     }
   }
 
+  const getLatestActivity = (item) => {
+    if (!item) return null
+    if (item.status === 'submitted' && item.revisi_selesai) {
+      return {
+        aktivitas: 'Revisi Pemohon',
+        status: 'Perbaikan sudah dikirim',
+        statusWarna: 'green-600',
+        keterangan: 'Revisi berhasil dikirim dan menunggu verifikasi ulang oleh tim LPSE.',
+        _sortAt: item.updated_at,
+      }
+    }
+    const history = buildHistory(item)
+    if (history.length === 0) return null
+    return history[history.length - 1]
+  }
+
   const allHistory = histories.flat().sort((a, b) => {
     const ta = a._sortAt || ''
     const tb = b._sortAt || ''
@@ -190,12 +213,23 @@ export default function CekStatus() {
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE Portal</span>
           <div className="hidden md:flex items-center gap-lg ml-lg">
             <a className="text-on-surface-variant hover:bg-surface-container-low px-xs py-base transition-colors font-body-md text-body-md cursor-pointer" onClick={() => navigate('/')}>Formulir Pengajuan</a>
-            <a className="text-on-surface-variant hover:bg-surface-container-low px-xs py-base transition-colors font-body-md text-body-md cursor-pointer" onClick={() => navigate('/kolom-cek-status')}>Cek Status Pengajuan</a>
+            <a className="text-primary font-bold border-b-2 border-primary pb-1 font-body-md text-body-md" href="#">Cek Status Pengajuan</a>
           </div>
         </div>
         <div className="flex items-center gap-md">
-          <div className="flex items-center gap-sm"></div>
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors"
+          >
+            <span className="material-symbols-outlined text-primary">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
         </div>
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-surface border-b border-outline-variant md:hidden">
+            <a className="block w-full text-left px-md py-sm text-on-surface-variant hover:bg-surface-container-low font-body-md text-body-md cursor-pointer" onClick={() => { setMobileMenuOpen(false); navigate('/') }}>Formulir Pengajuan</a>
+            <a className="block w-full text-left px-md py-sm text-primary font-bold border-b border-outline-variant font-body-md text-body-md" href="#">Cek Status Pengajuan</a>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-[1000px] mx-auto px-md py-xl">
@@ -264,16 +298,16 @@ export default function CekStatus() {
               <div className="space-y-sm">
                 <div className="flex items-start gap-md">
                   <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full ${getProgressInfo(selectedPengajuan.status, selectedPengajuan).color}`}></div>
+                    <div className={`w-3 h-3 rounded-full ${(getLatestActivity(selectedPengajuan) || getProgressInfo(selectedPengajuan.status, selectedPengajuan)).color}`}></div>
                     <div className="w-px h-12 bg-outline-variant"></div>
                     <div className="w-3 h-3 rounded-full bg-outline-variant"></div>
                   </div>
                     <div className="space-y-xs">
                       <p className="font-body-md text-body-md text-primary font-bold">
-                        {getProgressInfo(selectedPengajuan.status, selectedPengajuan).title}
+                        {(getLatestActivity(selectedPengajuan) || getProgressInfo(selectedPengajuan.status, selectedPengajuan)).title}
                       </p>
                       <p className="font-body-sm text-body-sm text-on-surface-variant">
-                        {getProgressInfo(selectedPengajuan.status, selectedPengajuan).desc}
+                        {(getLatestActivity(selectedPengajuan) || getProgressInfo(selectedPengajuan.status, selectedPengajuan)).desc}
                       </p>
                        {selectedPengajuan.status === 'rejected' && selectedPengajuan.alasan_ditolak && (
                          <p className="font-body-sm text-body-sm text-red-700">
@@ -285,8 +319,16 @@ export default function CekStatus() {
                            <span className="font-semibold">Catatan Revisi:</span> {selectedPengajuan.alasan_revisi}
                          </p>
                        )}
-                      <p className="font-label-sm text-label-sm text-outline mt-xs">Terakhir diperbarui pada {formatDateTime(selectedPengajuan.updated_at)}</p>
-                    </div>
+                        <p className="font-label-sm text-label-sm text-outline mt-xs">Terakhir diperbarui pada {formatDateTime(selectedPengajuan.updated_at)}</p>
+                         {isRevisionRequested(selectedPengajuan) && (
+                           <div className="pt-md">
+                            <button onClick={() => navigate(`/edit-pengajuan/${selectedPengajuan.id}`)} className="w-fit px-md py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs">
+                              <span>Perbaiki</span>
+                              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                            </button>
+                          </div>
+                         )}
+                     </div>
                 </div>
               </div>
             </section>
@@ -321,12 +363,12 @@ export default function CekStatus() {
                 </table>
               </div>
               {!pengajuanId && totalHistoryPages > 1 && (
-                <div className="flex items-center justify-between mt-md pt-md border-t border-outline-variant">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0 mt-md pt-md border-t border-outline-variant">
                   <button
                     type="button"
                     onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
                     disabled={safeHistoryPage <= 1}
-                    className="px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+                    className="w-full md:w-auto px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
                   >
                     Sebelumnya
                   </button>
@@ -337,7 +379,7 @@ export default function CekStatus() {
                     type="button"
                     onClick={() => setHistoryPage((p) => Math.min(totalHistoryPages, p + 1))}
                     disabled={safeHistoryPage >= totalHistoryPages}
-                    className="px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
+                    className="w-full md:w-auto px-md py-xs rounded-lg border border-outline-variant text-label-md font-label-md text-on-surface-variant disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-container-low transition-colors"
                   >
                     Selanjutnya
                   </button>
@@ -346,15 +388,6 @@ export default function CekStatus() {
             </section>
           )}
         </form>
-
-        {isRejected && (
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md">
-            <button onClick={() => navigate('/')} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs">
-              <span>Perbaiki</span>
-              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-            </button>
-          </div>
-        )}
 
         <footer className="mt-xl border-t border-outline-variant pt-lg flex flex-col md:flex-row justify-between items-center gap-md">
           <div className="flex items-center gap-md">

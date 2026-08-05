@@ -6,7 +6,7 @@ export default function LoginVerifikator() {
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState('')
-  const { signIn, user } = useAuth()
+  const { signInWithDb, user } = useAuth()
   const navigate = useNavigate()
 
   if (user) {
@@ -17,7 +17,10 @@ export default function LoginVerifikator() {
     e.preventDefault()
     setError('')
 
-    const { data, error: err } = await signIn(email, password, 'admin_verifikator')
+    const trimmedEmail = email.trim().toLowerCase()
+    const trimmedPassword = password.trim()
+
+    const { data, error: err } = await signInWithDb(trimmedEmail, trimmedPassword)
 
     if (err) {
       setError(err.message)
@@ -55,6 +58,7 @@ export default function LoginVerifikator() {
               className="w-full px-4 py-3 border border-outline-variant rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="nama@example.com"
               required
+              autoComplete="email"
             />
           </div>
 
@@ -69,6 +73,7 @@ export default function LoginVerifikator() {
               className="w-full px-4 py-3 border border-outline-variant rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="••••••••"
               required
+              autoComplete="current-password"
             />
           </div>
 
