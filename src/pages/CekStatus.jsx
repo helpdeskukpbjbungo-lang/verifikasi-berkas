@@ -397,7 +397,7 @@ export default function CekStatus() {
             </div>
           </div>
           <div className="text-on-surface-variant text-body-sm font-body-sm">
-            © 2024 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
+            © 2026 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
           </div>
         </footer>
       </main>

@@ -542,7 +542,7 @@ export default function PengajuanForm() {
           </div>
         </div>
         <div className="text-on-surface-variant font-body-sm text-body-sm">
-          © 2024 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
+          © 2026 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
         </div>
       </footer>
     </main>
