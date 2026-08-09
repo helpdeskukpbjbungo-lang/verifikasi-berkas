@@ -248,7 +248,7 @@ export default function PengajuanMasuk() {
   }
 
   return (
-    <div className="pb-16 md:pb-0">
+    <div className="w-full max-w-[1280px] pb-16 md:pb-0">
       {/* Page Header */}
       <div className="mb-lg flex flex-col md:flex-row md:items-end justify-between gap-md">
         <div>
@@ -372,22 +372,9 @@ export default function PengajuanMasuk() {
                   paginatedItems.map(item => (
                     <tr key={item.id} className="hover:bg-surface-container-low transition-colors group">
                       <td className="pl-4 md:pl-md pr-2 md:pr-md py-sm">
-                        <div className="flex items-center gap-sm">
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs hidden md:flex flex-shrink-0 ${
-                              item.status === 'verified'
-                                ? 'bg-green-100 text-green-700'
-                                : item.status === 'rejected'
-                                  ? 'bg-error-container text-on-error-container'
-                                  : 'bg-secondary-fixed text-secondary'
-                            }`}
-                          >
-                            {getInitials(item.nama_lengkap)}
-                          </div>
-                          <div className="min-w-0 -ml-2 md:ml-0">
-                            <p className="font-bold truncate">{item.nama_lengkap}</p>
-                            <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
-                          </div>
+                        <div className="min-w-0">
+                          <p className="font-bold truncate">{item.nama_lengkap}</p>
+                          <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
                         </div>
                       </td>
                       <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.satker || '-'}</td>
