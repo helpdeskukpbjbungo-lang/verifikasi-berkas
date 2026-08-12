@@ -44,6 +44,17 @@ export default function PengajuanMasuk() {
     rejected: pengajuanList.filter(i => i.status === 'rejected').length,
   }
 
+  const isToday = (dateStr) => {
+    if (!dateStr) return false
+    const date = new Date(dateStr)
+    const now = new Date()
+    return date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear()
+  }
+
+  const selesaiHariIni = pengajuanList.filter(i => (i.status === 'verified' || i.status === 'rejected') && isToday(i.updated_at)).length
+
   const filtered = statusFilter === 'all'
     ? pengajuanList
     : pengajuanList.filter(item => item.status === statusFilter)
@@ -314,7 +325,7 @@ export default function PengajuanMasuk() {
             </span>
           </div>
           <p className="text-label-xs md:text-label-md font-label-md text-on-surface-variant">Selesai Hari Ini</p>
-          <h3 className="text-headline-sm md:text-headline-md font-headline-sm md:font-headline-md text-primary">{stats.rejected}</h3>
+          <h3 className="text-headline-sm md:text-headline-md font-headline-sm md:font-headline-md text-primary">{selesaiHariIni}</h3>
         </div>
       </div>
 

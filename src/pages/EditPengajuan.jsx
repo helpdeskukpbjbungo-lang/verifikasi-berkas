@@ -503,7 +503,7 @@ export default function EditPengajuan() {
           </section>
 
           <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md">
-            <button onClick={() => navigate(-1)} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-secondary border border-secondary rounded-lg hover:bg-surface-container-low transition-colors">
+            <button type="button" onClick={() => navigate(-1)} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-secondary border border-secondary rounded-lg hover:bg-surface-container-low transition-colors">
               Batal
             </button>
             <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>

@@ -195,9 +195,8 @@ export default function LaporanVerifikator() {
 
         
 
-        <div className="overflow-x-auto custom-scrollbar">
-          <div className="inline-block min-w-full align-middle">
-            <table className="w-full text-left border-collapse">
+        <div>
+          <table className="w-full text-left border-collapse">
               <thead className="bg-surface-container-low text-label-md text-primary font-bold uppercase tracking-wider sticky top-0">
                 <tr>
                   <th className="pl-4 md:pl-md pr-2 md:pr-md py-sm border-b border-outline-variant">Pemohon</th>
@@ -220,11 +219,11 @@ export default function LaporanVerifikator() {
                   paginatedReport.map(item => (
                     <tr key={item.id} className="hover:bg-surface-container-low transition-colors group">
                        <td className="pl-4 md:pl-md pr-2 md:pr-md py-sm">
-                         <div className="min-w-0">
-                           <p className="font-bold truncate">{item.nama_lengkap}</p>
-                           <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
-                         </div>
-                       </td>
+                          <div className="min-w-0">
+                            <p className="font-bold">{item.nama_lengkap}</p>
+                            <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
+                          </div>
+                        </td>
                       <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.satker || '-'}</td>
                       <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                       <td className="px-2 md:px-md py-sm hidden sm:table-cell">{formatDateTime(item.created_at)}</td>
@@ -258,7 +257,6 @@ export default function LaporanVerifikator() {
               </tbody>
             </table>
           </div>
-        </div>
 
         <div className="p-md bg-surface-container-low border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0">
           <p className="text-label-xs md:text-label-sm text-on-surface-variant text-center md:text-left">Menampilkan {paginatedReport.length} dari {filtered.length} permohonan</p>

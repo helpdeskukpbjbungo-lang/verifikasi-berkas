@@ -5,6 +5,8 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import pengajuanRoutes from './routes/pengajuan.js'
 import authRoutes from './routes/auth.js'
+import ppkRoutes from './routes/ppk.js'
+import ppRoutes from './routes/pp.js'
 
 dotenv.config()
 
@@ -18,6 +20,8 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use('/api', pengajuanRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/ppk', ppkRoutes)
+app.use('/api/pp', ppRoutes)
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

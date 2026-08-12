@@ -11,6 +11,8 @@ import DashboardVerifikator from './pages/DashboardVerifikator'
 import PengajuanMasuk from './pages/PengajuanMasuk'
 import DetailPengajuan from './pages/DetailPengajuan'
 import LaporanVerifikator from './pages/LaporanVerifikator'
+import DataPPK from './pages/DataPPK'
+import DataPP from './pages/DataPP'
 import ProfilVerifikator from './pages/ProfilVerifikator'
 
 function ProtectedRoute({ children }) {
@@ -83,6 +85,20 @@ function App() {
           <ProtectedRoute>
             <AppLayout>
               <LaporanVerifikator />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/datappk" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DataPPK />
+            </AppLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/datapp" element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DataPP />
             </AppLayout>
           </ProtectedRoute>
         } />
