@@ -30,6 +30,29 @@ body {
 input:focus,
 select:focus {
   outline: none;
-  border-color: #1a365d;
-  box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.1);
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.1);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.gradient-subtle {
+  background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+}
+
+.gradient-step {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.page-gradient {
+  background: linear-gradient(180deg, #1e3a8a 0%, #2563eb 25%, #dbeafe 50%, #f8fafc 75%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }

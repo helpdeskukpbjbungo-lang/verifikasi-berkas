@@ -207,8 +207,8 @@ export default function CekStatus() {
   const startIdx = (safeHistoryPage - 1) * HISTORY_PER_PAGE
   const paginatedHistory = allHistory.slice(startIdx, startIdx + HISTORY_PER_PAGE)
   return (
-    <div className="bg-background min-h-screen">
-      <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs bg-surface border-b border-outline-variant">
+    <div className="page-gradient">
+      <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs glass-nav">
         <div className="flex items-center gap-md">
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE DocVerify</span>
           <div className="hidden md:flex items-center gap-lg ml-lg">
@@ -225,7 +225,7 @@ export default function CekStatus() {
           </button>
         </div>
         {mobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-surface border-b border-outline-variant md:hidden">
+          <div className="absolute top-full left-0 right-0 bg-white/90 backdrop-blur-md border-b border-outline-variant md:hidden">
             <a className="block w-full text-left px-md py-sm text-on-surface-variant hover:bg-surface-container-low font-body-md text-body-md cursor-pointer" onClick={() => { setMobileMenuOpen(false); navigate('/') }}>Formulir Pengajuan</a>
             <a className="block w-full text-left px-md py-sm text-primary font-bold border-b border-outline-variant font-body-md text-body-md" href="#">Cek Status Pengajuan</a>
           </div>
@@ -233,9 +233,11 @@ export default function CekStatus() {
       </nav>
 
       <main className="max-w-[1000px] mx-auto px-md py-xl">
-        <header className="mb-xl text-center">
-          <h1 className="font-headline-lg text-headline-lg text-primary mb-xs">Detail Status Pengajuan</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Pantau perkembangan verifikasi berkas Anda secara real-time dan tinjau riwayat aktivitas pengajuan.</p>
+        <header className="mb-xl">
+          <div className="bg-white border border-outline-variant rounded-xl p-lg shadow-sm text-center">
+            <h1 className="font-headline-lg text-headline-lg text-primary mb-xs">Detail Status Pengajuan</h1>
+            <p className="font-body-md text-body-md text-on-surface-variant">Pantau perkembangan verifikasi berkas Anda secara real-time dan tinjau riwayat aktivitas pengajuan.</p>
+          </div>
         </header>
 
         <div className="w-full max-w-[800px] mx-auto mb-xl px-md">
@@ -322,7 +324,7 @@ export default function CekStatus() {
                         <p className="font-label-sm text-label-sm text-outline mt-xs">Terakhir diperbarui pada {formatDateTime(selectedPengajuan.updated_at)}</p>
                          {isRevisionRequested(selectedPengajuan) && (
                            <div className="pt-md">
-                            <button onClick={() => navigate(`/edit-pengajuan/${selectedPengajuan.id}`)} className="w-fit px-md py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs">
+                            <button onClick={() => navigate(`/edit-pengajuan/${selectedPengajuan.id}`)} className="w-fit px-md py-sm font-label-md text-label-md gradient-primary text-on-primary rounded-lg hover:opacity-90 shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs">
                               <span>Perbaiki</span>
                               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                             </button>

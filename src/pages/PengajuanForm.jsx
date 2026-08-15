@@ -186,8 +186,8 @@ export default function PengajuanForm() {
   }
 
   return (
-    <div>
-      <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs bg-surface border-b border-outline-variant">
+    <div className="page-gradient">
+      <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs glass-nav">
         <div className="flex items-center gap-md">
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE DocVerify</span>
           <div className="hidden md:flex items-center gap-lg ml-lg">
@@ -204,7 +204,7 @@ export default function PengajuanForm() {
           </button>
         </div>
         {mobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-surface border-b border-outline-variant md:hidden">
+          <div className="absolute top-full left-0 right-0 bg-white/90 backdrop-blur-md border-b border-outline-variant shadow-lg md:hidden">
             <a className="block w-full text-left px-md py-sm text-primary font-bold border-b border-outline-variant font-body-md text-body-md" href="#">Formulir Pengajuan</a>
             <a className="block w-full text-left px-md py-sm text-on-surface-variant hover:bg-surface-container-low font-body-md text-body-md cursor-pointer" onClick={() => { setMobileMenuOpen(false); navigate('/kolom-cek-status') }}>Cek Status Pengajuan</a>
           </div>
@@ -212,14 +212,14 @@ export default function PengajuanForm() {
       </nav>
 
       <main className="max-w-[1000px] mx-auto px-md py-xl">
-      <header className="mb-xl text-center">
+      <div className="gradient-subtle rounded-2xl p-xl mb-xl text-center">
         <h1 className="font-headline-lg text-headline-lg text-primary mb-xs">Formulir Pengajuan Pemohon</h1>
         <p className="font-body-md text-body-md text-on-surface-variant">Lengkapi data diri dan unggah dokumen pendukung untuk proses verifikasi akun LPSE.</p>
-      </header>
+      </div>
 
       <div className="flex flex-row justify-center items-center mb-xl gap-1 md:gap-xl">
         <div className="flex items-center gap-xs step-active">
-          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">1</span>
+          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full gradient-step flex items-center justify-center font-bold text-label-sm md:text-label-md text-white shadow-sm">1</span>
           <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Data Diri</span>
         </div>
         <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
@@ -235,7 +235,7 @@ export default function PengajuanForm() {
       </div>
 
       <form className="space-y-lg" id="submissionForm" onSubmit={handleSubmit}>
-        <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm">
           <div className="flex items-center gap-sm mb-lg border-b border-outline-variant pb-md">
             <span className="material-symbols-outlined text-secondary">person</span>
             <h2 className="font-headline-sm text-headline-sm text-primary">Data Pemohon</h2>
@@ -335,7 +335,7 @@ export default function PengajuanForm() {
           </div>
         </section>
 
-        <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
+        <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg shadow-sm">
           <div className="flex items-center gap-sm mb-lg border-b border-outline-variant pb-md">
             <span className="material-symbols-outlined text-secondary">cloud_upload</span>
             <h2 className="font-headline-sm text-headline-sm text-primary">Pusat Unggah Dokumen</h2>
@@ -353,7 +353,7 @@ export default function PengajuanForm() {
                   </div>
                 </div>
                 <div className="flex items-center gap-sm">
-                  <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
                     Pilih File
                     <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_rekomendasi_ukpbj', e.target.files[0])} />
                   </label>
@@ -383,7 +383,7 @@ export default function PengajuanForm() {
                    </div>
                  </div>
                  <div className="flex items-center gap-sm">
-                   <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                   <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
                      Pilih File
                      <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_kpa_sertifikat_pbj', e.target.files[0])} />
                    </label>
@@ -412,7 +412,7 @@ export default function PengajuanForm() {
                 </div>
               </div>
               <div className="flex items-center gap-sm">
-                <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
                   Pilih File
                   <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_permohonan', e.target.files[0])} />
                 </label>
@@ -440,7 +440,7 @@ export default function PengajuanForm() {
                 </div>
               </div>
               <div className="flex items-center gap-sm">
-                <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
                   Pilih File
                   <input className="hidden" type="file" onChange={(e) => handleFileChange('pakta_integritas', e.target.files[0])} />
                 </label>
@@ -468,7 +468,7 @@ export default function PengajuanForm() {
                 </div>
               </div>
               <div className="flex items-center gap-sm">
-                <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
                   Pilih File
                   <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_terbaru', e.target.files[0])} />
                 </label>
@@ -497,7 +497,7 @@ export default function PengajuanForm() {
                   </div>
                 </div>
                 <div className="flex items-center gap-sm">
-                  <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
                     Pilih File
                     <input className="hidden" type="file" onChange={(e) => handleFileChange('sertifikat_level1', e.target.files[0])} />
                   </label>
@@ -518,10 +518,10 @@ export default function PengajuanForm() {
         </section>
 
         <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md">
-          <button onClick={handleSaveDraft} disabled={!isFormComplete} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-secondary border border-secondary rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-50 disabled:cursor-not-allowed" type="button">
+          <button onClick={handleSaveDraft} disabled={!isFormComplete} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-secondary border border-secondary rounded-lg hover:bg-surface-container-low hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" type="button">
             Simpan Draft
           </button>
-          <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>
+          <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md gradient-primary text-on-primary rounded-lg hover:opacity-90 shadow-md active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>
             <span>{submitting ? 'Mengirim...' : 'Lanjutkan Pengajuan'}</span>
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
