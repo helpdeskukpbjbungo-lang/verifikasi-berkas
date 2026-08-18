@@ -23,6 +23,7 @@ export default function PengajuanForm() {
   const [fileErrors, setFileErrors] = React.useState({})
   const [submitting, setSubmitting] = React.useState(false)
   const [submitMessage, setSubmitMessage] = React.useState('')
+  const [showSuccessPopup, setShowSuccessPopup] = React.useState(false)
   const [satkerList, setSatkerList] = React.useState([])
   const [loadingSatker, setLoadingSatker] = React.useState(true)
   const [nipError, setNipError] = React.useState('')
@@ -167,7 +168,6 @@ export default function PengajuanForm() {
       }
 
       if (response.ok) {
-        setSubmitMessage('Pengajuan berhasil dikirim. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.')
         setFormData({
           nama_lengkap: '',
           nip: '',
@@ -175,6 +175,7 @@ export default function PengajuanForm() {
           satker: '',
         })
         setFiles({})
+        setShowSuccessPopup(true)
       } else {
         setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
       }
@@ -529,9 +530,39 @@ export default function PengajuanForm() {
         </div>
       </form>
 
-      {submitMessage && (
+      {submitMessage && !showSuccessPopup && (
         <div className={`mt-md p-md rounded-lg border ${submitMessage.includes('berhasil') ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
           <p className="font-body-sm text-body-sm">{submitMessage}</p>
+        </div>
+      )}
+
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowSuccessPopup(false)}>
+          <div className="w-full max-w-[420px] bg-white rounded-xl shadow-2xl overflow-hidden popup-enter" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-green-600 text-3xl">check_circle</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md text-primary mb-2">Pengajuan Berhasil!</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                Pengajuan berhasil dikirim. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={() => setShowSuccessPopup(false)}
+                  className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={() => navigate('/kolom-cek-status')}
+                  className="w-full sm:w-auto px-md py-sm rounded-lg gradient-primary text-on-primary font-bold hover:opacity-90 shadow-sm transition-all"
+                >
+                  Cek Status
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
