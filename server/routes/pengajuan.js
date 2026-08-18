@@ -447,7 +447,9 @@ router.put('/pengajuan/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Pengajuan tidak ditemukan' })
     }
 
-    res.json({ message: 'Status diperbarui', status, formulir: data[0] })
+    const formulir = data[0]
+
+    res.json({ message: 'Status diperbarui', status, formulir })
   } catch (error) {
     console.error('Error updating status:', error)
     res.status(500).json({ error: 'Gagal memperbarui status' })

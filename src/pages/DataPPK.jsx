@@ -8,6 +8,8 @@ export default function DataPPK() {
   const [modalOpen, setModalOpen] = React.useState(false)
   const [mutasiOpen, setMutasiOpen] = React.useState(false)
   const [selectedPpk, setSelectedPpk] = React.useState(null)
+  const [selectedDetail, setSelectedDetail] = React.useState(null)
+  const [detailOpen, setDetailOpen] = React.useState(false)
   const [form, setForm] = React.useState({ nama_lengkap: '', nip: '', jabatan: '', satker: '', status_aktif: 'aktif' })
   const [mutasiForm, setMutasiForm] = React.useState({ satker: '', status_aktif: 'aktif', catatan: '' })
   const [syncing, setSyncing] = React.useState(false)
@@ -16,6 +18,8 @@ export default function DataPPK() {
   const [loadingSatker, setLoadingSatker] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('all')
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const ITEMS_PER_PAGE = 5
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
@@ -27,6 +31,10 @@ export default function DataPPK() {
     }
     loadData(true)
   }, [user, authLoading, navigate])
+
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, statusFilter])
 
   const loadData = async (shouldAutoSync = false) => {
     setLoading(true)
@@ -107,6 +115,11 @@ export default function DataPPK() {
     } finally {
       setLoadingSatker(false)
     }
+  }
+
+  const openDetail = (ppk) => {
+    setSelectedDetail(ppk)
+    setDetailOpen(true)
   }
 
   const closeModal = () => {
@@ -193,6 +206,11 @@ export default function DataPPK() {
     return result
   }, [ppkList, searchQuery, statusFilter])
 
+  const totalPages = Math.max(1, Math.ceil(filteredPpkList.length / ITEMS_PER_PAGE))
+  const safePage = Math.min(currentPage, totalPages)
+  const startIdx = (safePage - 1) * ITEMS_PER_PAGE
+  const paginatedItems = filteredPpkList.slice(startIdx, startIdx + ITEMS_PER_PAGE)
+
   return (
     <div className="w-full max-w-[1280px] pb-16 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
@@ -202,17 +220,9 @@ export default function DataPPK() {
             Kelola data Pejabat Pembuat Komitmen (PPK) dan catat mutasi pergantian instansi atau status non-aktif.
           </p>
         </div>
-        <button
-          onClick={handleSync}
-          disabled={syncing}
-          className="flex items-center gap-xs px-md py-xs bg-surface border border-outline-variant text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-colors disabled:opacity-50"
-        >
-          <span className="material-symbols-outlined text-sm">sync</span>
-          {syncing ? 'Menyinkronkan...' : 'Sync dari Pengajuan'}
-        </button>
       </div>
 
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm mb-16">
         <div className="p-3 md:p-md border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-sm">
           <div>
             <h3 className="text-headline-sm font-headline-sm text-primary">Daftar PPK</h3>
@@ -262,14 +272,14 @@ export default function DataPPK() {
                     Memuat data...
                   </td>
                 </tr>
-              ) : filteredPpkList.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-2 md:px-md py-sm text-center text-on-surface-variant">
                     {searchQuery || statusFilter !== 'all' ? 'Tidak ada hasil pencarian.' : 'Belum ada data PPK.'}
                   </td>
                 </tr>
               ) : (
-                filteredPpkList.map((item) => (
+                paginatedItems.map((item) => (
                   <tr key={item.id} className="hover:bg-surface-container-low transition-colors">
                     <td className="px-2 md:px-md py-sm">
                       <p className="font-bold">{item.nama_lengkap}</p>
@@ -286,20 +296,32 @@ export default function DataPPK() {
                     </td>
                     <td className="px-2 md:px-md py-sm text-center">
                       <div className="flex items-center justify-center gap-xs">
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                          title="Edit"
-                        >
-                          <span className="material-symbols-outlined text-sm">edit</span>
-                        </button>
-                        <button
-                          onClick={() => openMutasi(item)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                          title="Mutasi"
-                        >
-                          <span className="material-symbols-outlined text-sm">swap_horiz</span>
-                        </button>
+                        {item.status_aktif === 'aktif' ? (
+                          <>
+                            <button
+                              onClick={() => openEdit(item)}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
+                              title="Edit"
+                            >
+                              <span className="material-symbols-outlined text-sm">edit</span>
+                            </button>
+                            <button
+                              onClick={() => openMutasi(item)}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
+                              title="Mutasi"
+                            >
+                              <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => openDetail(item)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
+                            title="Detail"
+                          >
+                            <span className="material-symbols-outlined text-sm">visibility</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -308,6 +330,40 @@ export default function DataPPK() {
             </tbody>
           </table>
         </div>
+        {filteredPpkList.length > ITEMS_PER_PAGE && (
+          <div className="p-md bg-surface-container-low border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-2 md:gap-0">
+            <p className="text-label-xs md:text-label-sm text-on-surface-variant text-center md:text-left">Menampilkan {paginatedItems.length} dari {filteredPpkList.length} data PPK</p>
+            <div className="flex items-center gap-1 md:gap-base">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-white text-on-surface-variant disabled:opacity-50 hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">chevron_left</span>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 flex items-center justify-center rounded text-label-sm font-bold ${
+                    page === safePage
+                      ? 'bg-primary text-on-primary'
+                      : 'border border-outline-variant bg-white text-on-surface-variant hover:bg-surface-container transition-colors'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-white text-on-surface-variant hover:bg-surface-container transition-colors disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-sm">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Modal */}
@@ -459,6 +515,65 @@ export default function DataPPK() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {detailOpen && selectedDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 md:p-0" onClick={() => setDetailOpen(false)}>
+          <div className="w-full md:w-[520px] max-h-[90vh] flex flex-col bg-surface-container-lowest rounded-lg shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-3 md:p-md border-b border-outline-variant">
+              <h3 className="text-headline-sm font-headline-sm text-primary">Detail Data PPK</h3>
+              <button onClick={() => setDetailOpen(false)} className="p-xs hover:bg-surface-container-low rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+              </button>
+            </div>
+            <div className="p-3 md:p-md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-secondary">
+                    {selectedDetail.nama_lengkap ? selectedDetail.nama_lengkap.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : '??'}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-body-md text-body-md text-on-surface font-bold">{selectedDetail.nama_lengkap}</p>
+                  <p className="text-label-sm text-on-surface-variant">NIP: {selectedDetail.nip}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Jabatan</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedDetail.jabatan || '-'}</p>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Satuan Kerja</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedDetail.satker || '-'}</p>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Status Aktif</p>
+                  <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(selectedDetail.status_aktif)}`}>
+                    {selectedDetail.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
+                  </span>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Dibuat</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedDetail.created_at ? new Date(selectedDetail.created_at).toLocaleString('id-ID') : '-'}</p>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3 md:col-span-2">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Diperbarui</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedDetail.updated_at ? new Date(selectedDetail.updated_at).toLocaleString('id-ID') : '-'}</p>
+                </div>
+              </div>
+
+              {selectedDetail.status_aktif === 'non-aktif' && selectedDetail.alasan_penonaktifan && (
+                <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-label-xs text-red-700 mb-1 font-semibold">Alasan Penonaktifan</p>
+                  <p className="font-body-sm text-body-sm text-red-800">{selectedDetail.alasan_penonaktifan}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

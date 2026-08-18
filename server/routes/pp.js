@@ -152,7 +152,7 @@ router.post('/sync', async (req, res) => {
     const { data: pengajuanList, error: pengajuanError } = await supabase
       .from('formulir_pengajuan')
       .select('nama_lengkap, nip, jabatan, satker, created_at')
-      .or('jabatan.ilike.%PP%,jabatan.ilike.%Pejabat Pengadaan%')
+      .or('jabatan.ilike.%Pejabat Pengadaan%')
 
     if (pengajuanError) {
       throw pengajuanError
@@ -170,11 +170,11 @@ router.post('/sync', async (req, res) => {
     for (const item of map.values()) {
       const { data: existing } = await supabase
         .from('pp')
-        .select('status_aktif, alasan_penonaktifan')
+        .select('id, status_aktif, alasan_penonaktifan')
         .eq('nip', item.nip)
-        .single()
+        .maybeSingle()
 
-      const payload = {
+      const basePayload = {
         nama_lengkap: item.nama_lengkap,
         nip: item.nip,
         jabatan: item.jabatan,
@@ -182,14 +182,27 @@ router.post('/sync', async (req, res) => {
         updated_at: new Date().toISOString(),
       }
 
-      const { error: insertError } = await supabase
-        .from('pp')
-        .upsert(payload, { onConflict: 'nip' })
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from('pp')
+          .update(basePayload)
+          .eq('id', existing.id)
 
-      if (insertError) {
-        console.error('Sync insert error:', insertError)
+        if (updateError) {
+          console.error('Sync update error:', updateError)
+        } else {
+          inserted++
+        }
       } else {
-        inserted++
+        const { error: insertError } = await supabase
+          .from('pp')
+          .insert(basePayload)
+
+        if (insertError) {
+          console.error('Sync insert error:', insertError)
+        } else {
+          inserted++
+        }
       }
     }
 

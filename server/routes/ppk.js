@@ -65,6 +65,7 @@ router.put('/:id', async (req, res) => {
       .single()
 
     if (fetchError || !existing) {
+      console.error('Fetch existing error:', fetchError)
       return res.status(404).json({ error: 'Data PPK tidak ditemukan' })
     }
 
@@ -79,8 +80,6 @@ router.put('/:id', async (req, res) => {
 
     if (status_aktif === 'non-aktif') {
       updatePayload.alasan_penonaktifan = alasan_penonaktifan || null
-    } else {
-      updatePayload.alasan_penonaktifan = null
     }
 
     const { data, error } = await supabase
@@ -90,9 +89,14 @@ router.put('/:id', async (req, res) => {
       .select()
       .single()
 
-    if (error || !data) {
+    if (error) {
       console.error('Update ppk error:', error)
-      return res.status(500).json({ error: 'Gagal memperbarui data PPK' })
+      return res.status(500).json({ error: 'Gagal memperbarui data PPK: ' + error.message })
+    }
+
+    if (!data) {
+      console.error('Update ppk empty data')
+      return res.status(500).json({ error: 'Gagal memperbarui data PPK: data kosong' })
     }
 
     res.json(data)
@@ -153,6 +157,8 @@ router.post('/sync', async (req, res) => {
       .from('formulir_pengajuan')
       .select('nama_lengkap, nip, jabatan, satker, created_at')
       .or('jabatan.ilike.%PPK%,jabatan.ilike.%Pejabat Pembuat Komitmen%')
+      .eq('status', 'verified')
+      .order('created_at', { ascending: false })
 
     if (pengajuanError) {
       throw pengajuanError
@@ -170,11 +176,11 @@ router.post('/sync', async (req, res) => {
     for (const item of map.values()) {
       const { data: existing } = await supabase
         .from('ppk')
-        .select('status_aktif, alasan_penonaktifan')
+        .select('id, status_aktif, alasan_penonaktifan')
         .eq('nip', item.nip)
-        .single()
+        .maybeSingle()
 
-      const payload = {
+      const basePayload = {
         nama_lengkap: item.nama_lengkap,
         nip: item.nip,
         jabatan: item.jabatan,
@@ -182,14 +188,27 @@ router.post('/sync', async (req, res) => {
         updated_at: new Date().toISOString(),
       }
 
-      const { error: insertError } = await supabase
-        .from('ppk')
-        .upsert(payload, { onConflict: 'nip' })
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from('ppk')
+          .update(basePayload)
+          .eq('id', existing.id)
 
-      if (insertError) {
-        console.error('Sync insert error:', insertError)
+        if (updateError) {
+          console.error('Sync update error:', updateError)
+        } else {
+          inserted++
+        }
       } else {
-        inserted++
+        const { error: insertError } = await supabase
+          .from('ppk')
+          .insert(basePayload)
+
+        if (insertError) {
+          console.error('Sync insert error:', insertError)
+        } else {
+          inserted++
+        }
       }
     }
 
