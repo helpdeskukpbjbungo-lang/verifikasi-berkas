@@ -109,17 +109,18 @@ export default function PengajuanForm() {
     !nipError
   )
 
-  const handleSaveDraft = () => {
-    const draft = {
-      formData,
-      files: Object.fromEntries(
-        Object.entries(files).map(([key, file]) => [key, { name: file.name, size: file.size, type: file.type }])
-      ),
-      savedAt: new Date().toISOString(),
-    }
-    localStorage.setItem('pengajuan-draft', JSON.stringify(draft))
-    setSubmitMessage('Draft berhasil disimpan')
-    setTimeout(() => setSubmitMessage(''), 3000)
+  const handleBatal = () => {
+    setFormData({
+      nama_lengkap: '',
+      nip: '',
+      jabatan: '',
+      satker: '',
+    })
+    setFiles({})
+    setFileErrors({})
+    setNipError('')
+    localStorage.removeItem('pengajuan-draft')
+    setSubmitMessage('')
   }
 
   const handleSubmit = async (e) => {
@@ -186,7 +187,7 @@ export default function PengajuanForm() {
   }
 
   return (
-    <div className="page-gradient">
+    <div className="page-gradient-pengajuan">
       <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs glass-nav">
         <div className="flex items-center gap-md">
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE DocVerify</span>
@@ -518,10 +519,10 @@ export default function PengajuanForm() {
         </section>
 
         <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md">
-          <button onClick={handleSaveDraft} disabled={!isFormComplete} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-secondary border border-secondary rounded-lg hover:bg-surface-container-low hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" type="button">
-            Simpan Draft
+          <button onClick={handleBatal} disabled={submitting} className="order-2 sm:order-1 w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-white border border-white rounded-lg hover:bg-white/10 hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" type="button">
+            Batal
           </button>
-          <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md gradient-primary text-on-primary rounded-lg hover:opacity-90 shadow-md active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>
+          <button className="order-1 sm:order-2 w-full sm:w-auto px-xl py-sm font-label-md text-label-md gradient-primary text-on-primary rounded-lg hover:opacity-90 shadow-md active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>
             <span>{submitting ? 'Mengirim...' : 'Lanjutkan Pengajuan'}</span>
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
@@ -536,12 +537,12 @@ export default function PengajuanForm() {
 
       <footer className="mt-xl border-t border-outline-variant pt-lg flex flex-col md:flex-row justify-between items-center gap-md">
         <div className="flex items-center gap-md">
-          <div className="flex items-center gap-xs text-on-surface-variant">
+          <div className="flex items-center gap-xs text-white">
             <span className="material-symbols-outlined text-[20px]">schedule</span>
             <span className="font-body-sm text-body-sm">Estimasi verifikasi: 2-3 hari kerja</span>
           </div>
         </div>
-        <div className="text-on-surface-variant font-body-sm text-body-sm">
+        <div className="text-white font-body-sm text-body-sm">
           © 2026 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
         </div>
       </footer>

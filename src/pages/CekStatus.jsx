@@ -207,7 +207,7 @@ export default function CekStatus() {
   const startIdx = (safeHistoryPage - 1) * HISTORY_PER_PAGE
   const paginatedHistory = allHistory.slice(startIdx, startIdx + HISTORY_PER_PAGE)
   return (
-    <div className="page-gradient">
+    <div className="page-gradient-pengajuan">
       <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs glass-nav">
         <div className="flex items-center gap-md">
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE DocVerify</span>
@@ -393,12 +393,12 @@ export default function CekStatus() {
 
         <footer className="mt-xl border-t border-outline-variant pt-lg flex flex-col md:flex-row justify-between items-center gap-md">
           <div className="flex items-center gap-md">
-            <div className="flex items-center gap-xs text-on-surface-variant">
+            <div className="flex items-center gap-xs text-white">
               <span className="material-symbols-outlined text-[20px]">schedule</span>
               <span className="text-body-sm font-body-sm">Estimasi verifikasi: 2-3 hari kerja</span>
             </div>
           </div>
-          <div className="text-on-surface-variant text-body-sm font-body-sm">
+          <div className="text-white text-body-sm font-body-sm">
             © 2026 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
           </div>
         </footer>
