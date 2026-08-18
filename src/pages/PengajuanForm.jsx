@@ -219,20 +219,20 @@ export default function PengajuanForm() {
         <p className="font-body-md text-body-md text-on-surface-variant">Lengkapi data diri dan unggah dokumen pendukung untuk proses verifikasi akun LPSE.</p>
       </div>
 
-      <div className="flex flex-row justify-center items-center mb-xl gap-1 md:gap-xl">
+        <div className="flex flex-row justify-center items-center mb-xl gap-1 md:gap-xl">
         <div className="flex items-center gap-xs step-active">
           <span className="w-6 h-6 md:w-8 md:h-8 rounded-full gradient-step flex items-center justify-center font-bold text-label-sm md:text-label-md text-white shadow-sm">1</span>
-          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Data Diri</span>
+          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md text-white">Data Diri</span>
         </div>
         <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
         <div className="flex items-center gap-xs step-inactive">
-          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">2</span>
-          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Unggah Dokumen</span>
+          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md text-white">2</span>
+          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md text-white">Unggah Dokumen</span>
         </div>
         <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
         <div className="flex items-center gap-xs step-inactive">
-          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">3</span>
-          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Konfirmasi</span>
+          <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md text-white">3</span>
+          <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md text-white">Konfirmasi</span>
         </div>
       </div>
 

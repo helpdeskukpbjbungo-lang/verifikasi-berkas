@@ -25,6 +25,7 @@ export default function EditPengajuan() {
   const [fileErrors, setFileErrors] = React.useState({})
   const [submitting, setSubmitting] = React.useState(false)
   const [submitMessage, setSubmitMessage] = React.useState('')
+  const [showSuccessPopup, setShowSuccessPopup] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [satkerList, setSatkerList] = React.useState([])
   const [loadingSatker, setLoadingSatker] = React.useState(true)
@@ -182,8 +183,8 @@ export default function EditPengajuan() {
       }
 
       if (response.ok) {
-        setSubmitMessage('Pengajuan berhasil diperbarui. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.')
-        setTimeout(() => navigate(`/cek-status?nip=${encodeURIComponent(formData.nip)}`), 1000)
+        setSubmitMessage('')
+        setShowSuccessPopup(true)
       } else {
         setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
       }
@@ -204,7 +205,7 @@ export default function EditPengajuan() {
   }
 
   return (
-    <div>
+    <div className="page-gradient-pengajuan">
       <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs bg-surface border-b border-outline-variant">
         <div className="flex items-center gap-md">
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE Portal</span>
@@ -222,24 +223,24 @@ export default function EditPengajuan() {
 
       <main className="max-w-[1000px] mx-auto px-md py-xl">
         <header className="mb-xl text-center">
-          <h1 className="font-headline-lg text-headline-lg text-primary mb-xs">Edit Pengajuan Pemohon</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">Perbaiki data diri dan dokumen pendukung untuk proses verifikasi akun LPSE.</p>
+          <h1 className="font-headline-lg text-headline-lg text-white mb-xs">Edit Pengajuan Pemohon</h1>
+          <p className="font-body-md text-body-md text-white">Perbaiki data diri dan dokumen pendukung untuk proses verifikasi akun LPSE.</p>
         </header>
 
         <div className="flex flex-row justify-center items-center mb-xl gap-1 md:gap-xl">
           <div className="flex items-center gap-xs step-active">
             <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">1</span>
-            <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Data Diri</span>
+            <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md text-white">Data Diri</span>
           </div>
           <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
           <div className="flex items-center gap-xs step-inactive">
             <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">2</span>
-            <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Unggah Dokumen</span>
+            <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md text-white">Unggah Dokumen</span>
           </div>
           <div className="hidden md:block w-8 md:w-16 h-px bg-outline-variant"></div>
           <div className="flex items-center gap-xs step-inactive">
             <span className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-label-sm md:text-label-md">3</span>
-            <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md">Konfirmasi</span>
+            <span className="font-label-sm md:font-label-md text-label-sm md:text-label-md text-white">Konfirmasi</span>
           </div>
         </div>
 
@@ -503,9 +504,9 @@ export default function EditPengajuan() {
           </section>
 
           <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md">
-            <button type="button" onClick={() => navigate(-1)} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-secondary border border-secondary rounded-lg hover:bg-surface-container-low transition-colors">
-              Batal
-            </button>
+          <button type="button" onClick={() => navigate(-1)} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-white border border-white rounded-lg hover:bg-white/10 hover:shadow-sm transition-all">
+            Batal
+          </button>
             <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>
               <span>{submitting ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
               <span className="material-symbols-outlined text-[18px]">save</span>
@@ -513,14 +514,44 @@ export default function EditPengajuan() {
           </div>
         </form>
 
-        {submitMessage && (
+        {submitMessage && !showSuccessPopup && (
           <div className={`mt-md p-md rounded-lg border ${submitMessage.includes('berhasil') ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
             <p className="font-body-sm text-body-sm">{submitMessage}</p>
           </div>
         )}
 
+        {showSuccessPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowSuccessPopup(false)}>
+            <div className="w-full max-w-[420px] bg-white rounded-xl shadow-2xl overflow-hidden popup-enter" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <span className="material-symbols-outlined text-green-600 text-3xl">check_circle</span>
+                </div>
+                <h3 className="font-headline-md text-headline-md text-primary mb-2">Pengajuan Berhasil!</h3>
+                <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                  Pengajuan berhasil diperbarui. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    onClick={() => setShowSuccessPopup(false)}
+                    className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                  >
+                    Tutup
+                  </button>
+                  <button
+                    onClick={() => navigate('/kolom-cek-status')}
+                    className="w-full sm:w-auto px-md py-sm rounded-lg gradient-primary text-on-primary font-bold hover:opacity-90 shadow-sm transition-all"
+                  >
+                    Cek Status
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <footer className="mt-xl border-t border-outline-variant pt-lg flex flex-col md:flex-row justify-between items-center gap-md">
-          <div className="text-on-surface-variant font-body-sm text-body-sm">
+          <div className="text-white font-body-sm text-body-sm">
             © 2024 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
           </div>
         </footer>
