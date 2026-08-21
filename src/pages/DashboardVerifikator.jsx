@@ -5,6 +5,8 @@ import { useAuth } from '../hooks/useAuth'
 export default function DashboardVerifikator() {
   const [pengajuanList, setPengajuanList] = React.useState([])
   const [statusFilter, setStatusFilter] = React.useState('all')
+  const [selectedItem, setSelectedItem] = React.useState(null)
+  const [detailOpen, setDetailOpen] = React.useState(false)
   const { user, loading } = useAuth()
   const navigate = useNavigate()
 
@@ -17,12 +19,22 @@ export default function DashboardVerifikator() {
     loadData()
   }, [user, loading, navigate])
 
-  const loadData = async () => {
+   const loadData = async () => {
     const response = await fetch('/api/pengajuan')
     if (response.ok) {
       const data = await response.json()
       setPengajuanList(data || [])
     }
+  }
+
+  const openDetail = (item) => {
+    setSelectedItem(item)
+    setDetailOpen(true)
+  }
+
+  const closeModal = () => {
+    setDetailOpen(false)
+    setSelectedItem(null)
   }
 
   const stats = {
@@ -108,7 +120,7 @@ export default function DashboardVerifikator() {
         <div>
           <h2 className="font-headline-lg text-headline-lg text-primary mb-xs">Ringkasan Verifikator</h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Selamat datang kembali, Ahmad. Pantau dan kelola antrean verifikasi Anda di sini.
+            Selamat datang kembali, {user?.nama_lengkap || 'Pengguna'}. Pantau dan kelola antrean verifikasi Anda di sini.
           </p>
         </div>
         <div className="flex items-center gap-sm text-label-sm text-on-surface-variant bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
@@ -281,9 +293,9 @@ export default function DashboardVerifikator() {
                      </p>
                      <p className="text-[10px] text-outline mt-1">{formatDateTime(item.updated_at)}</p>
                    </div>
-                   <button className="px-md py-xs bg-primary text-on-primary text-label-sm rounded-lg hover:bg-primary-container transition-all flex-shrink-0">
-                     Lihat
-                   </button>
+                    <button onClick={() => openDetail(item)} className="px-md py-xs bg-primary text-on-primary text-label-sm rounded-lg hover:bg-primary-container transition-all flex-shrink-0">
+                      Lihat
+                    </button>
                  </div>
                ))
              )}
@@ -332,7 +344,71 @@ export default function DashboardVerifikator() {
            <span className="material-symbols-outlined">person</span>
            <span className="text-[10px]">Profil</span>
          </button>
-       </nav>
+        </nav>
+
+      {detailOpen && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={closeModal}>
+          <div className="w-full md:w-[520px] max-h-[90vh] flex flex-col bg-surface-container-lowest rounded-lg shadow-xl overflow-y-auto popup-enter" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-3 md:p-md border-b border-outline-variant">
+              <h3 className="text-headline-sm font-headline-sm text-primary">Informasi Detail Pengajuan</h3>
+              <button onClick={closeModal} className="p-xs hover:bg-surface-container-low rounded-lg transition-colors">
+                <span className="material-symbols-outlined text-on-surface-variant">close</span>
+              </button>
+            </div>
+            <div className="p-3 md:p-md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-secondary">
+                    {selectedItem.nama_lengkap ? selectedItem.nama_lengkap.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : '??'}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-body-md text-body-md text-on-surface font-bold">{selectedItem.nama_lengkap}</p>
+                  <p className="text-label-sm text-on-surface-variant">NIP: {selectedItem.nip}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Jabatan</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedItem.jabatan || '-'}</p>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Satuan Kerja</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedItem.satker || '-'}</p>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Status</p>
+                  <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(selectedItem.status)}`}>
+                    {getStatusLabel(selectedItem.status)}
+                  </span>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Dibuat</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedItem.created_at ? formatDateTime(selectedItem.created_at) : '-'}</p>
+                </div>
+                <div className="bg-surface-container-low rounded-lg p-3 md:col-span-2">
+                  <p className="text-label-xs text-on-surface-variant mb-1">Diperbarui</p>
+                  <p className="font-body-sm text-body-sm text-on-surface font-medium">{selectedItem.updated_at ? formatDateTime(selectedItem.updated_at) : '-'}</p>
+                </div>
+              </div>
+
+              {selectedItem.status === 'rejected' && selectedItem.alasan_ditolak && (
+                <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-label-xs text-red-700 mb-1 font-semibold">Alasan Penolakan</p>
+                  <p className="font-body-sm text-body-sm text-red-800">{selectedItem.alasan_ditolak}</p>
+                </div>
+              )}
+              {selectedItem.status === 'submitted' && selectedItem.alasan_revisi && (
+                <div className="mt-3 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <p className="text-label-xs text-orange-700 mb-1 font-semibold">Catatan Revisi</p>
+                  <p className="font-body-sm text-body-sm text-orange-800">{selectedItem.alasan_revisi}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

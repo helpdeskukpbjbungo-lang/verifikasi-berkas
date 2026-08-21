@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 export default function CekStatus() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const nip = searchParams.get('nip') || ''
+  const nip = (searchParams.get('nip') || '').trim()
   const pengajuanId = searchParams.get('id') || ''
   const [pengajuanList, setPengajuanList] = React.useState([])
   const [loading, setLoading] = React.useState(false)
@@ -12,6 +12,23 @@ export default function CekStatus() {
   const [historyPage, setHistoryPage] = React.useState(1)
   const HISTORY_PER_PAGE = 2
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
+  const [showVerifiedPopup, setShowVerifiedPopup] = React.useState(false)
+  const prevVerifiedRef = React.useRef(false)
+
+  const selectedPengajuan = pengajuanId
+    ? pengajuanList.find((item) => item.id === pengajuanId) || null
+    : pengajuanList.length > 0
+      ? [...pengajuanList].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || b.created_at))[0]
+      : null
+
+  React.useEffect(() => {
+    if (!selectedPengajuan) return
+    const isVerified = selectedPengajuan.status === 'verified'
+    if (isVerified && !prevVerifiedRef.current) {
+      setShowVerifiedPopup(true)
+    }
+    prevVerifiedRef.current = isVerified
+  }, [selectedPengajuan])
 
   React.useEffect(() => {
     if (!nip) return
@@ -19,9 +36,12 @@ export default function CekStatus() {
     setError(false)
     setHistoryPage(1)
     fetch(`/api/pengajuan?_t=${Date.now()}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Network response was not ok')
+        return res.json()
+      })
       .then((data) => {
-        const matched = data.filter((item) => item.nip === nip)
+        const matched = (Array.isArray(data) ? data : []).filter((item) => String(item.nip || '').trim() === nip)
         setPengajuanList(matched)
       })
       .catch(() => setError(true))
@@ -114,11 +134,6 @@ export default function CekStatus() {
     return history
   }
 
-  const selectedPengajuan = pengajuanId
-    ? pengajuanList.find((item) => item.id === pengajuanId) || null
-    : pengajuanList.length > 0
-      ? [...pengajuanList].sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))[0]
-      : null
   const histories = pengajuanList.map((item) => buildHistory(item))
   const selectedHistory = selectedPengajuan
     ? (histories[pengajuanList.findIndex((item) => item.id === selectedPengajuan.id)] || [])
@@ -248,7 +263,11 @@ export default function CekStatus() {
         </div>
 
         <form className="space-y-lg" id="submissionForm" onSubmit={(e) => e.preventDefault()}>
-          {nip && (
+          {!nip ? (
+            <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg text-center">
+              <p className="font-body-md text-body-md text-on-surface-variant">Masukkan NIP untuk melihat status pengajuan.</p>
+            </section>
+          ) : (
             <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg">
               <div className="flex items-center gap-sm mb-md">
                 <span className="material-symbols-outlined text-secondary">badge</span>
@@ -298,10 +317,10 @@ export default function CekStatus() {
                   )}
               </div>
               <div className="space-y-sm">
-                <div className="flex items-start gap-md">
+                <div className="flex items-end gap-md">
                   <div className="flex flex-col items-center">
                     <div className={`w-3 h-3 rounded-full ${(getLatestActivity(selectedPengajuan) || getProgressInfo(selectedPengajuan.status, selectedPengajuan)).color}`}></div>
-                    <div className="w-px h-12 bg-outline-variant"></div>
+                    <div className="w-px h-6 bg-outline-variant"></div>
                     <div className="w-3 h-3 rounded-full bg-outline-variant"></div>
                   </div>
                     <div className="space-y-xs">
@@ -321,7 +340,7 @@ export default function CekStatus() {
                            <span className="font-semibold">Catatan Revisi:</span> {selectedPengajuan.alasan_revisi}
                          </p>
                        )}
-                        <p className="font-label-sm text-label-sm text-outline mt-xs">Terakhir diperbarui pada {formatDateTime(selectedPengajuan.updated_at)}</p>
+                         <p className="font-label-sm text-label-sm text-outline">Terakhir diperbarui pada {formatDateTime(selectedPengajuan.updated_at)}</p>
                          {isRevisionRequested(selectedPengajuan) && (
                            <div className="pt-md">
                             <button onClick={() => navigate(`/edit-pengajuan/${selectedPengajuan.id}`)} className="w-fit px-md py-sm font-label-md text-label-md gradient-primary text-on-primary rounded-lg hover:opacity-90 shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs">
@@ -403,6 +422,28 @@ export default function CekStatus() {
           </div>
         </footer>
       </main>
+
+      {showVerifiedPopup && selectedPengajuan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowVerifiedPopup(false)}>
+          <div className="w-full max-w-[420px] bg-white rounded-xl shadow-2xl overflow-hidden popup-enter" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <span className="material-symbols-outlined text-green-600 text-4xl">check_circle</span>
+              </div>
+              <h3 className="font-headline-md text-headline-md text-primary mb-2">Pengajuan Telah Disetujui</h3>
+              <p className="font-body-md text-body-md text-on-surface-variant mb-6">
+                Pengajuan Anda telah diverifikasi dan disetujui oleh tim LPSE.
+              </p>
+              <button
+                onClick={() => setShowVerifiedPopup(false)}
+                className="w-full sm:w-auto px-md py-sm rounded-lg gradient-primary text-on-primary font-bold hover:opacity-90 shadow-sm transition-all"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

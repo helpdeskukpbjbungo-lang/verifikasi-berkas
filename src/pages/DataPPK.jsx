@@ -12,7 +12,6 @@ export default function DataPPK() {
   const [detailOpen, setDetailOpen] = React.useState(false)
   const [form, setForm] = React.useState({ nama_lengkap: '', nip: '', jabatan: '', satker: '', status_aktif: 'aktif' })
   const [mutasiForm, setMutasiForm] = React.useState({ satker: '', status_aktif: 'aktif', catatan: '' })
-  const [syncing, setSyncing] = React.useState(false)
   const [alasanPenonaktifan, setAlasanPenonaktifan] = React.useState('')
   const [satkerList, setSatkerList] = React.useState([])
   const [loadingSatker, setLoadingSatker] = React.useState(false)
@@ -29,51 +28,26 @@ export default function DataPPK() {
       navigate('/loginverifikator')
       return
     }
-    loadData(true)
+    loadData()
   }, [user, authLoading, navigate])
 
   React.useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery, statusFilter])
 
-  const loadData = async (shouldAutoSync = false) => {
+  const loadData = async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/ppk')
       if (response.ok) {
         const data = await response.json()
         setPpkList(data || [])
-        if (shouldAutoSync && (data || []).length === 0) {
-          await doSync()
-        }
       }
     } catch (err) {
       console.error('Failed to load PPK data:', err)
     } finally {
       setLoading(false)
     }
-  }
-
-  const doSync = async () => {
-    setSyncing(true)
-    try {
-      const response = await fetch('/api/ppk/sync', { method: 'POST' })
-      if (response.ok) {
-        const result = await response.json()
-        loadData(false)
-      } else {
-        const result = await response.json()
-        alert(result.error || 'Gagal sinkronisasi')
-      }
-    } catch (err) {
-      alert('Gagal sinkronisasi: ' + err.message)
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  const handleSync = () => {
-    doSync()
   }
 
   const openAdd = () => {

@@ -37,17 +37,6 @@ export default function LaporanVerifikator() {
     ? pengajuanList
     : pengajuanList.filter(item => item.status === statusFilter)
 
-  React.useEffect(() => {
-    setReportPage(1)
-  }, [statusFilter])
-
-  const stats = {
-    total: pengajuanList.length,
-    pending: pengajuanList.filter(i => i.status === 'submitted').length,
-    verified: pengajuanList.filter(i => i.status === 'verified').length,
-    rejected: pengajuanList.filter(i => i.status === 'rejected').length,
-  }
-
   const formatDate = (dateStr) => {
     if (!dateStr) return '-'
     const date = new Date(dateStr)
@@ -100,15 +89,6 @@ export default function LaporanVerifikator() {
     }
   }
 
-  const getInitials = (nama) => {
-    return nama
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   const handleExport = async () => {
     try {
       const response = await fetch('/api/pengajuan/export/xlsx')
@@ -147,25 +127,6 @@ export default function LaporanVerifikator() {
         <div className="flex items-center gap-sm text-label-sm text-on-surface-variant bg-surface-container-low px-sm py-xs rounded border border-outline-variant">
           <span className="material-symbols-outlined text-sm">calendar_today</span>
           <span>{formatDate(new Date().toISOString())}</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-md mb-xl">
-        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Total Pengajuan</p>
-          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-primary">{String(stats.total).padStart(2, '0')}</h3>
-        </div>
-        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Menunggu</p>
-          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-secondary">{String(stats.pending).padStart(2, '0')}</h3>
-        </div>
-        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Terverifikasi</p>
-          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-green-700">{String(stats.verified).padStart(2, '0')}</h3>
-        </div>
-        <div className="bg-white p-3 md:p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow">
-          <p className="text-label-xs md:text-label-md font-bold text-on-surface-variant mb-xs">Ditolak</p>
-          <h3 className="text-headline-sm md:text-headline-lg font-headline-sm md:font-headline-lg text-error">{String(stats.rejected).padStart(2, '0')}</h3>
         </div>
       </div>
 

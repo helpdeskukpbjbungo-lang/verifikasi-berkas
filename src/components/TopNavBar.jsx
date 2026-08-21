@@ -15,7 +15,7 @@ export default function TopNavBar({ onToggleSidebar, sidebarOpen }) {
         >
           <span className="material-symbols-outlined text-primary dark:text-primary-fixed">menu</span>
         </button>
-        <h1 className="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary-fixed">LPSE Portal</h1>
+        <h1 className="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary-fixed">LPSE DocVerify</h1>
       </div>
 
       <div className="hidden md:flex items-center gap-sm">

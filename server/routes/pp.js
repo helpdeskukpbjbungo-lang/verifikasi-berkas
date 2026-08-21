@@ -153,6 +153,7 @@ router.post('/sync', async (req, res) => {
       .from('formulir_pengajuan')
       .select('nama_lengkap, nip, jabatan, satker, created_at')
       .or('jabatan.ilike.%Pejabat Pengadaan%')
+      .eq('status', 'verified')
 
     if (pengajuanError) {
       throw pengajuanError

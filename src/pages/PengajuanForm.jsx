@@ -1,10 +1,11 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Select from 'react-select'
+import logoLpse from '../img/logo-lpse-bungo.png'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const FILE_LIMITS = {
-  surat_permohonan: 5 * 1024 * 1024,
+  surat_permohonan: 2 * 1024 * 1024,
   pakta_integritas: 2 * 1024 * 1024,
   sk_terbaru: 10 * 1024 * 1024,
   surat_rekomendasi_ukpbj: 2 * 1024 * 1024,
@@ -24,6 +25,7 @@ export default function PengajuanForm() {
   const [submitting, setSubmitting] = React.useState(false)
   const [submitMessage, setSubmitMessage] = React.useState('')
   const [showSuccessPopup, setShowSuccessPopup] = React.useState(false)
+  const [showWelcome, setShowWelcome] = React.useState(true)
   const [satkerList, setSatkerList] = React.useState([])
   const [loadingSatker, setLoadingSatker] = React.useState(true)
   const [nipError, setNipError] = React.useState('')
@@ -189,6 +191,34 @@ export default function PengajuanForm() {
 
   return (
     <div className="page-gradient-pengajuan">
+      {showWelcome && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-2xl overflow-hidden popup-enter text-center">
+            <div className="p-8">
+              <div className="flex items-center justify-center mb-6">
+                <img
+                  src={logoLpse}
+                  alt="Logo LPSE Bungo"
+                  className="h-10 w-auto object-contain"
+                />
+              </div>
+              <h2 className="font-headline-md text-headline-md font-bold text-primary mb-4" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Selamat Datang di Portal Verifikasi Berkas Akun LPSE</h2>
+              <p className="font-body-sm text-body-sm text-on-surface-variant mb-8">
+                Silahkan lengkapi data diri dan unggah dokumen pendukung Anda untuk memulai proses verifikasi Berkas.
+              
+                Pastikan seluruh informasi yang Anda masukkan sudah benar dan sesuai dengan dokumen asli.
+              </p>
+              <button
+                onClick={() => setShowWelcome(false)}
+                className="w-full px-xl py-sm font-label-md text-label-md gradient-primary text-on-primary rounded-lg hover:opacity-90 shadow-md active:opacity-80 transition-all"
+              >
+                Masuk ke Formulir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="sticky top-0 z-50 flex justify-between items-center w-full px-md py-xs glass-nav">
         <div className="flex items-center gap-md">
           <span className="text-headline-sm font-headline-sm font-bold text-primary">LPSE DocVerify</span>
@@ -351,7 +381,8 @@ export default function PengajuanForm() {
                    </div>
                    <div>
                      <p className="font-label-md text-label-md text-primary">Surat Rekomendasi UKPBJ</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                     <p className="text-[11px] text-black">Surat rekomendasi dari UKPBJ setelah surat permohonan disetujui</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-sm">
@@ -380,8 +411,9 @@ export default function PengajuanForm() {
                      <span className="material-symbols-outlined text-secondary">verified</span>
                    </div>
                    <div>
-                     <p className="font-label-md text-label-md text-primary">SK KPA / Sertifikat PBJ Level-1</p>
-                   <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 5MB</p>
+                      <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1 / SK KPA bagi PPK</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                    <p className="text-[11px] text-black">Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP / SK KPA bagi PPK </p>
                    </div>
                  </div>
                  <div className="flex items-center gap-sm">
@@ -409,8 +441,9 @@ export default function PengajuanForm() {
                   <span className="material-symbols-outlined text-secondary">description</span>
                 </div>
                 <div>
-                  <p className="font-label-md text-label-md text-primary">Surat Permohonan Verifikasi</p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                   <p className="font-label-md text-label-md text-primary">Surat Permohonan Verifikasi</p>
+                   <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                   <p className="text-[11px] text-black">Wajib diunggah dengan tanda tangan basah dan stempel atau menggunakan TTE</p>
                 </div>
               </div>
               <div className="flex items-center gap-sm">
@@ -437,8 +470,9 @@ export default function PengajuanForm() {
                   <span className="material-symbols-outlined text-secondary">verified</span>
                 </div>
                 <div>
-                  <p className="font-label-md text-label-md text-primary">Pakta Integritas</p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                   <p className="font-label-md text-label-md text-primary">Pakta Integritas</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                    <p className="text-[11px] text-black">Pakta Integritas yang sudah ditandatangani diatas Materai 10.000</p>
                 </div>
               </div>
               <div className="flex items-center gap-sm">
@@ -465,8 +499,9 @@ export default function PengajuanForm() {
                   <span className="material-symbols-outlined text-secondary">assignment_ind</span>
                 </div>
                 <div>
-                  <p className="font-label-md text-label-md text-primary">SK PP/PPK/PA Terbaru</p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 10MB</p>
+                   <p className="font-label-md text-label-md text-primary">SK PP/PPK/PA Terbaru</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                    <p className="text-[11px] text-black">Scan Asli SK Pengangkatan sebagai PP/PPK/PA</p>
                 </div>
               </div>
               <div className="flex items-center gap-sm">
@@ -494,8 +529,9 @@ export default function PengajuanForm() {
                      <span className="material-symbols-outlined text-secondary">verified</span>
                    </div>
                    <div>
-                    <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1</p>
+                     <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1</p>
                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                    <p className="text-[11px] text-black">Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP / SK KPA bagi PPK</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-sm">

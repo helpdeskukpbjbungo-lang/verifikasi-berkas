@@ -408,10 +408,25 @@ router.put('/pengajuan/:id/status', async (req, res) => {
     const { id } = req.params
     const { status, alasan_ditolak, alasan_revisi } = req.body
 
-    console.log('Update status request:', { id, status, alasan_ditolak, alasan_revisi })
+    console.log('=== Status Update Request ===')
+    console.log('ID:', id)
+    console.log('Status:', status)
+    console.log('Alasan Ditolak:', alasan_ditolak)
+    console.log('Alasan Revisi:', alasan_revisi)
+    console.log('Body:', req.body)
 
     if (!['draft', 'submitted', 'verified', 'rejected'].includes(status)) {
       return res.status(400).json({ error: 'Status tidak valid' })
+    }
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('formulir_pengajuan')
+      .select('status, jabatan')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !existing) {
+      return res.status(404).json({ error: 'Pengajuan tidak ditemukan' })
     }
 
     const updatePayload = { status, updated_at: new Date().toISOString() }

@@ -76,8 +76,8 @@ export default function SideNavBar({ open, onClose }) {
             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
               <span className="material-symbols-outlined text-on-primary text-sm">shield</span>
             </div>
-            <div className="mt-sm">
-              <p className="text-label-md font-black text-primary leading-tight">LPSE Verifier</p>
+            <div>
+              <p className="text-label-md font-black text-primary leading-tight">Administrator</p>
               <p className="text-xs text-on-surface-variant font-medium">Official Portal</p>
             </div>
           </div>

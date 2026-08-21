@@ -302,8 +302,8 @@ export default function PengajuanMasuk() {
             </span>
             <span className="text-[10px] md:text-label-sm text-primary-fixed hidden md:inline">High Priority</span>
           </div>
-          <p className="text-label-xs md:text-label-md font-label-md text-primary-fixed">Pengajuan Baru</p>
-          <h3 className="text-headline-sm md:text-headline-md font-headline-sm md:font-headline-md text-white">{stats.baru}</h3>
+          <p className="text-label-xs md:text-label-md font-label-md text-on-surface-variant">Pengajuan Baru</p>
+          <h3 className="text-headline-sm md:text-headline-md font-headline-sm md:font-headline-md text-primary">{stats.baru}</h3>
         </div>
 
         {/* Sedang Diproses */}
@@ -335,7 +335,7 @@ export default function PengajuanMasuk() {
         <div className="p-md md:p-lg border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-md bg-surface-container-lowest">
           <div>
             <h3 className="text-headline-sm font-headline-sm text-primary">Antrean Verifikasi</h3>
-            <p className="text-body-sm text-on-surface-variant">Daftar permohonan sertifikat digital yang menunggu validasi data.</p>
+            <p className="text-body-sm text-on-surface-variant">Daftar pemohon yang menunggu Verifikasi Berkas.</p>
           </div>
           <div className="flex flex-wrap items-center gap-xs">
             <div className="relative">
@@ -577,7 +577,7 @@ export default function PengajuanMasuk() {
                                const docInfo = {
                                  surat_permohonan: { label: 'Surat Permohonan Verifikasi', icon: 'description' },
                                  pakta_integritas: { label: 'Pakta Integritas', icon: 'verified' },
-                                 sk_terbaru: { label: 'SK Jabatan Terakhir', icon: 'assignment_ind' },
+                                 sk_terbaru: { label: 'SK PP/PPK/PA', icon: 'assignment_ind' },
                                  sertifikat_level1: { label: 'Sertifikat PBJ Level-1', icon: 'verified' },
                                  sk_kpa_sertifikat_pbj: { label: 'SK KPA / Sertifikat PBJ Level-1', icon: 'verified' },
                                }[doc.jenis_dokumen] || { label: doc.jenis_dokumen.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()).replace(/Ukpbj/g, 'UKPBJ'), icon: 'description' }

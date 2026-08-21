@@ -26,6 +26,7 @@ export default function EditPengajuan() {
   const [submitting, setSubmitting] = React.useState(false)
   const [submitMessage, setSubmitMessage] = React.useState('')
   const [showSuccessPopup, setShowSuccessPopup] = React.useState(false)
+  const [missingDocTypes, setMissingDocTypes] = React.useState(new Set())
   const [loading, setLoading] = React.useState(true)
   const [satkerList, setSatkerList] = React.useState([])
   const [loadingSatker, setLoadingSatker] = React.useState(true)
@@ -44,6 +45,19 @@ export default function EditPengajuan() {
     if (lower.includes('sk kpa')) types.push('sk_kpa_sertifikat_pbj')
     if (lower.includes('surat permohonan')) types.push('surat_permohonan')
     return types
+  }
+
+  const missingDocLabels = {
+    nama_lengkap: 'Nama Lengkap',
+    nip: 'NIP',
+    jabatan: 'Jabatan',
+    satker: 'Satuan Kerja',
+    surat_permohonan: 'Surat Permohonan Verifikasi',
+    pakta_integritas: 'Pakta Integritas',
+    sk_terbaru: 'SK Terbaru',
+    surat_rekomendasi_ukpbj: 'Surat Rekomendasi UKPBJ',
+    sertifikat_level1: 'Sertifikat Level-1',
+    sk_kpa_sertifikat_pbj: 'SK KPA / Sertifikat PBJ Level-1',
   }
 
   const revisedDocTypes = getRevisedDocTypes(revisionNote)
@@ -95,14 +109,17 @@ export default function EditPengajuan() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    setMissingDocTypes(new Set())
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSatkerChange = (selected) => {
+    setMissingDocTypes(new Set())
     setFormData((prev) => ({ ...prev, satker: selected ? selected.value : '' }))
   }
 
   const handleNipChange = (e) => {
+    setMissingDocTypes(new Set())
     const raw = e.target.value.replace(/\D/g, '')
     const value = raw.slice(0, 18)
     setFormData((prev) => ({ ...prev, nip: value }))
@@ -118,6 +135,7 @@ export default function EditPengajuan() {
   }
 
   const handleFileChange = (jenis, file) => {
+    setMissingDocTypes(new Set())
     setFileErrors((prev) => {
       const next = { ...prev }
       delete next[jenis]
@@ -139,23 +157,49 @@ export default function EditPengajuan() {
 
   const isFormComplete = Boolean(
     formData.nama_lengkap &&
-    formData.nip &&
-    formData.jabatan &&
-    formData.satker &&
-    !nipError &&
-    (revisedDocTypes.length === 0
-      ? files['surat_permohonan'] && files['pakta_integritas'] && files['sk_terbaru'] &&
-        (formData.jabatan !== 'Pejabat Pengadaan (PP)' || (files['surat_rekomendasi_ukpbj'] && files['sertifikat_level1'])) &&
-        (formData.jabatan !== 'Pejabat Pembuat Komitmen (PPK)' || /kecamatan/i.test(formData.satker || '') || files['sk_kpa_sertifikat_pbj'])
-      : revisedDocTypes.every(type => files[type])
-    )
+      formData.nip &&
+      formData.jabatan &&
+      formData.satker &&
+      !nipError &&
+      (revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_permohonan') ? !!files['surat_permohonan'] : true) &&
+      (revisedDocTypes.length === 0 || revisedDocTypes.includes('pakta_integritas') ? !!files['pakta_integritas'] : true) &&
+      (revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_terbaru') ? !!files['sk_terbaru'] : true) &&
+      (formData.jabatan !== 'Pejabat Pengadaan (PP)' || ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_rekomendasi_ukpbj')) ? !!files['surat_rekomendasi_ukpbj'] : true) && ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sertifikat_level1')) ? !!files['sertifikat_level1'] : true)) &&
+      (formData.jabatan !== 'Pejabat Pembuat Komitmen (PPK)' || /kecamatan/i.test(formData.satker || '') || ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_kpa_sertifikat_pbj')) ? !!files['sk_kpa_sertifikat_pbj'] : true))
   )
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setSubmitMessage('')
+  const getMissingDocuments = () => {
+    const missing = []
+    if (!formData.nama_lengkap) missing.push('nama_lengkap')
+    if (!formData.nip) missing.push('nip')
+    if (nipError) missing.push('nip')
+    if (!formData.jabatan) missing.push('jabatan')
+    if (!formData.satker) missing.push('satker')
+    if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_permohonan')) && !files['surat_permohonan']) missing.push('surat_permohonan')
+    if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('pakta_integritas')) && !files['pakta_integritas']) missing.push('pakta_integritas')
+    if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_terbaru')) && !files['sk_terbaru']) missing.push('sk_terbaru')
+    if (formData.jabatan === 'Pejabat Pengadaan (PP)') {
+      if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_rekomendasi_ukpbj')) && !files['surat_rekomendasi_ukpbj']) missing.push('surat_rekomendasi_ukpbj')
+      if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sertifikat_level1')) && !files['sertifikat_level1']) missing.push('sertifikat_level1')
+    }
+    if (formData.jabatan === 'Pejabat Pembuat Komitmen (PPK)' && !/kecamatan/i.test(formData.satker || '')) {
+      if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_kpa_sertifikat_pbj')) && !files['sk_kpa_sertifikat_pbj']) missing.push('sk_kpa_sertifikat_pbj')
+    }
+    return missing
+  }
 
+   const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitMessage('')
+    setMissingDocTypes(new Set())
+
+    if (!isFormComplete) {
+      const missing = getMissingDocuments()
+      setMissingDocTypes(new Set(missing))
+      return
+    }
+
+    setSubmitting(true)
     try {
       const formDataToSend = new FormData()
       formDataToSend.append('nama_lengkap', formData.nama_lengkap)
@@ -378,6 +422,9 @@ export default function EditPengajuan() {
                   {fileErrors['surat_rekomendasi_ukpbj'] && (
                     <p className="text-[11px] text-error mt-1">{fileErrors['surat_rekomendasi_ukpbj']}</p>
                   )}
+                  {missingDocTypes.has('surat_rekomendasi_ukpbj') && (
+                    <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
+                  )}
                 </div>
               )}
 
@@ -407,6 +454,9 @@ export default function EditPengajuan() {
                   </div>
                   {fileErrors['surat_permohonan'] && (
                     <p className="text-[11px] text-error mt-1">{fileErrors['surat_permohonan']}</p>
+                  )}
+                  {missingDocTypes.has('surat_permohonan') && (
+                    <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
                   )}
                 </div>
               )}
@@ -438,6 +488,9 @@ export default function EditPengajuan() {
                   {fileErrors['pakta_integritas'] && (
                     <p className="text-[11px] text-error mt-1">{fileErrors['pakta_integritas']}</p>
                   )}
+                  {missingDocTypes.has('pakta_integritas') && (
+                    <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
+                  )}
                 </div>
               )}
 
@@ -467,6 +520,9 @@ export default function EditPengajuan() {
                   </div>
                   {fileErrors['sk_terbaru'] && (
                     <p className="text-[11px] text-error mt-1">{fileErrors['sk_terbaru']}</p>
+                  )}
+                  {missingDocTypes.has('sk_terbaru') && (
+                    <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
                   )}
                 </div>
               )}
@@ -498,6 +554,9 @@ export default function EditPengajuan() {
                   {fileErrors['sertifikat_level1'] && (
                     <p className="text-[11px] text-error mt-1">{fileErrors['sertifikat_level1']}</p>
                   )}
+                  {missingDocTypes.has('sertifikat_level1') && (
+                    <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
+                  )}
                 </div>
               )}
             </div>
@@ -507,9 +566,8 @@ export default function EditPengajuan() {
           <button type="button" onClick={() => navigate(-1)} className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md text-white border border-white rounded-lg hover:bg-white/10 hover:shadow-sm transition-all">
             Batal
           </button>
-            <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit" disabled={submitting}>
+            <button className="w-full sm:w-auto px-xl py-sm font-label-md text-label-md bg-primary text-on-primary rounded-lg hover:bg-primary-container shadow-sm active:opacity-80 transition-all flex items-center justify-center gap-xs" type="submit">
               <span>{submitting ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
-              <span className="material-symbols-outlined text-[18px]">save</span>
             </button>
           </div>
         </form>

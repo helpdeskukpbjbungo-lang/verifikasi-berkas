@@ -12,7 +12,6 @@ export default function DataPP() {
   const [selectedDetail, setSelectedDetail] = React.useState(null)
   const [form, setForm] = React.useState({ nama_lengkap: '', nip: '', jabatan: '', satker: '', status_aktif: 'aktif' })
   const [mutasiForm, setMutasiForm] = React.useState({ satker: '', status_aktif: 'aktif', catatan: '' })
-  const [syncing, setSyncing] = React.useState(false)
   const [alasanPenonaktifan, setAlasanPenonaktifan] = React.useState('')
   const [satkerList, setSatkerList] = React.useState([])
   const [loadingSatker, setLoadingSatker] = React.useState(false)
@@ -21,16 +20,13 @@ export default function DataPP() {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
-  const loadData = async (shouldAutoSync = false) => {
+  const loadData = async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/pp')
       if (response.ok) {
         const data = await response.json()
         setPpList(data || [])
-        if (shouldAutoSync && (data || []).length === 0) {
-          await doSync()
-        }
       }
     } catch (err) {
       console.error('Failed to load PP data:', err)
@@ -39,35 +35,13 @@ export default function DataPP() {
     }
   }
 
-  const doSync = async () => {
-    setSyncing(true)
-    try {
-      const response = await fetch('/api/pp/sync', { method: 'POST' })
-      if (response.ok) {
-        const result = await response.json()
-        loadData(false)
-      } else {
-        const result = await response.json()
-        alert(result.error || 'Gagal sinkronisasi')
-      }
-    } catch (err) {
-      alert('Gagal sinkronisasi: ' + err.message)
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  const handleSync = () => {
-    doSync()
-  }
-
   React.useEffect(() => {
     if (authLoading) return
     if (!user) {
       navigate('/loginverifikator')
       return
     }
-    loadData(true)
+    loadData()
   }, [user, authLoading, navigate])
 
   const openAdd = () => {

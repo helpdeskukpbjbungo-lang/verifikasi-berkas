@@ -5,6 +5,12 @@ export default function KolomCekStatus() {
   const navigate = useNavigate()
   const [nip, setNip] = React.useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
+
+  const handleNipChange = (e) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 18)
+    setNip(value)
+  }
+
   const handleSearch = (e) => {
     e.preventDefault()
     if (nip.trim()) {
@@ -56,7 +62,7 @@ export default function KolomCekStatus() {
                   <div className="absolute inset-y-0 left-0 pl-sm flex items-center pointer-events-none">
                     <span className="material-symbols-outlined text-outline">person</span>
                   </div>
-                  <input className="block w-full pl-xl pr-md py-md border border-outline-variant rounded-xl bg-surface-bright focus:ring-primary focus:border-primary font-body-md" placeholder="Contoh: 198501012010011001" type="text" value={nip} onChange={(e) => setNip(e.target.value)}/>
+                   <input className="block w-full pl-xl pr-md py-md border border-outline-variant rounded-xl bg-surface-bright focus:ring-primary focus:border-primary font-body-md" placeholder="Contoh: 198501012010011001" type="text" value={nip} onChange={handleNipChange} maxLength={18} inputMode="numeric" />
                 </div>
                 <button className="w-full gradient-primary text-on-primary py-md px-lg rounded-xl font-label-md flex items-center justify-center gap-sm hover:opacity-90 shadow-md active:opacity-80 transition-all" type="submit">
                   <span className="material-symbols-outlined">search</span>
