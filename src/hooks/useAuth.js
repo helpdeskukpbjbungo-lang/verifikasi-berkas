@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { apiFetch } from '../lib/api'
 
 const STORAGE_KEY = 'lpse_auth_user'
 
@@ -134,7 +135,7 @@ export function useAuth() {
 
   const signInWithDb = async (email, password) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

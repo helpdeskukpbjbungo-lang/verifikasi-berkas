@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Select from 'react-select'
 import logoLpse from '../img/logo-lpse-bungo.png'
+import { apiFetch } from '../lib/api'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const FILE_LIMITS = {
@@ -35,7 +36,7 @@ export default function PengajuanForm() {
   React.useEffect(() => {
     const loadSatker = async () => {
       try {
-        const response = await fetch('/api/satker')
+        const response = await apiFetch('/api/satker')
         if (response.ok) {
           const data = await response.json()
           setSatkerList(data || [])
@@ -152,7 +153,7 @@ export default function PengajuanForm() {
         files: Object.keys(files).filter(k => files[k])
       })
 
-      const response = await fetch('/api/pengajuan', {
+      const response = await apiFetch('/api/pengajuan', {
         method: 'POST',
         body: formDataToSend,
       })

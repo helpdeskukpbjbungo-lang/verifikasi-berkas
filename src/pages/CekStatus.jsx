@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 export default function CekStatus() {
   const navigate = useNavigate()
@@ -35,7 +36,7 @@ export default function CekStatus() {
     setLoading(true)
     setError(false)
     setHistoryPage(1)
-    fetch(`/api/pengajuan?_t=${Date.now()}`)
+    apiFetch(`/api/pengajuan?_t=${Date.now()}`)
       .then((res) => {
         if (!res.ok) throw new Error('Network response was not ok')
         return res.json()

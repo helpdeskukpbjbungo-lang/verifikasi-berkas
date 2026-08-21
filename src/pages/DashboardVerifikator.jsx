@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { apiFetch } from '../lib/api'
 
 export default function DashboardVerifikator() {
   const [pengajuanList, setPengajuanList] = React.useState([])
@@ -20,7 +21,7 @@ export default function DashboardVerifikator() {
   }, [user, loading, navigate])
 
    const loadData = async () => {
-    const response = await fetch('/api/pengajuan')
+    const response = await apiFetch('/api/pengajuan')
     if (response.ok) {
       const data = await response.json()
       setPengajuanList(data || [])

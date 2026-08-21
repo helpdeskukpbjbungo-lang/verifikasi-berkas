@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { apiFetch } from '../lib/api'
 
 export default function DataPPK() {
   const [ppkList, setPpkList] = React.useState([])
@@ -38,7 +39,7 @@ export default function DataPPK() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/ppk')
+      const response = await apiFetch('/api/ppk')
       if (response.ok) {
         const data = await response.json()
         setPpkList(data || [])
@@ -79,7 +80,7 @@ export default function DataPPK() {
     setMutasiOpen(true)
     setLoadingSatker(true)
     try {
-      const response = await fetch('/api/satker')
+      const response = await apiFetch('/api/satker')
       if (response.ok) {
         const data = await response.json()
         setSatkerList(data || [])
@@ -120,7 +121,7 @@ export default function DataPPK() {
     const url = selectedPpk ? `/api/ppk/${selectedPpk.id}` : '/api/ppk'
     const method = selectedPpk ? 'PUT' : 'POST'
 
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -139,7 +140,7 @@ export default function DataPPK() {
     e.preventDefault()
     if (!selectedPpk) return
 
-    const response = await fetch(`/api/ppk/${selectedPpk.id}/mutasi`, {
+    const response = await apiFetch(`/api/ppk/${selectedPpk.id}/mutasi`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(mutasiForm),

@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Select from 'react-select'
+import { apiFetch } from '../lib/api'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024
 const FILE_LIMITS = {
@@ -67,7 +68,7 @@ export default function EditPengajuan() {
   React.useEffect(() => {
     const loadSatker = async () => {
       try {
-        const response = await fetch('/api/satker')
+        const response = await apiFetch('/api/satker')
         if (response.ok) {
           const data = await response.json()
           setSatkerList(data || [])
@@ -84,7 +85,7 @@ export default function EditPengajuan() {
   React.useEffect(() => {
     const loadPengajuan = async () => {
       try {
-        const response = await fetch(`/api/pengajuan/${id}`)
+        const response = await apiFetch(`/api/pengajuan/${id}`)
         if (response.ok) {
           const data = await response.json()
           if (data.formulir) {
@@ -213,7 +214,7 @@ export default function EditPengajuan() {
         }
       })
 
-      const response = await fetch(`/api/pengajuan/${id}`, {
+      const response = await apiFetch(`/api/pengajuan/${id}`, {
         method: 'PUT',
         body: formDataToSend,
       })

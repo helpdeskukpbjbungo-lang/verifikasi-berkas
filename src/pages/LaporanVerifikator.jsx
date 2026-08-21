@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { apiFetch } from '../lib/api'
 import ProfilPopup from '../components/ProfilPopup'
 
 export default function LaporanVerifikator() {
@@ -26,7 +27,7 @@ export default function LaporanVerifikator() {
   }, [statusFilter])
 
   const loadData = async () => {
-    const response = await fetch('/api/pengajuan')
+    const response = await apiFetch('/api/pengajuan')
     if (response.ok) {
       const data = await response.json()
       setPengajuanList(data || [])
@@ -91,7 +92,7 @@ export default function LaporanVerifikator() {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('/api/pengajuan/export/xlsx')
+      const response = await apiFetch('/api/pengajuan/export/xlsx')
       if (!response.ok) {
         throw new Error('Export failed')
       }

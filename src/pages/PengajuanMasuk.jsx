@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { apiFetch } from '../lib/api'
 import ProfilPopup from '../components/ProfilPopup'
 
 export default function PengajuanMasuk() {
@@ -30,7 +31,7 @@ export default function PengajuanMasuk() {
   }, [statusFilter])
 
   const loadData = async () => {
-    const response = await fetch('/api/pengajuan')
+    const response = await apiFetch('/api/pengajuan')
     if (response.ok) {
       const data = await response.json()
       setPengajuanList(data || [])
@@ -69,7 +70,7 @@ export default function PengajuanMasuk() {
     setIsModalOpen(true)
     setLoadingDetail(true)
     try {
-      const response = await fetch(`/api/pengajuan/${item.id}`)
+      const response = await apiFetch(`/api/pengajuan/${item.id}`)
       if (response.ok) {
         const data = await response.json()
         setDetailData(data)
@@ -103,7 +104,7 @@ export default function PengajuanMasuk() {
     if (!selectedItem) return
     setLoadingAction(true)
     try {
-      const response = await fetch(`/api/pengajuan/${selectedItem.id}/status`, {
+      const response = await apiFetch(`/api/pengajuan/${selectedItem.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, alasan_ditolak: alasanDitolak, alasan_revisi: alasanRevisi }),
