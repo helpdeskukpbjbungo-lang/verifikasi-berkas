@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server\" \"vite\"",
     "server": "node server/index.js",
     "server:dev": "nodemon server/index.js",
-    "build": "vite build && node build-copy.cjs",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
