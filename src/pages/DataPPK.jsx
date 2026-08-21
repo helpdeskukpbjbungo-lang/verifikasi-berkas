@@ -1,7 +1,15 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
+import {
+  getSatkerList,
+  getPpkList,
+  createPpk,
+  updatePpk,
+  mutatePpk,
+  syncPpkFromPengajuan,
+} from '../lib/supabase-helpers'
 
 export default function DataPPK() {
   const [ppkList, setPpkList] = React.useState([])
@@ -39,11 +47,8 @@ export default function DataPPK() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const response = await apiFetch('/api/ppk')
-      if (response.ok) {
-        const data = await response.json()
-        setPpkList(data || [])
-      }
+      const data = await getPpkList()
+      setPpkList(data || [])
     } catch (err) {
       console.error('Failed to load PPK data:', err)
     } finally {
@@ -80,11 +85,8 @@ export default function DataPPK() {
     setMutasiOpen(true)
     setLoadingSatker(true)
     try {
-      const response = await apiFetch('/api/satker')
-      if (response.ok) {
-        const data = await response.json()
-        setSatkerList(data || [])
-      }
+      const data = await getSatkerList()
+      setSatkerList(data || [])
     } catch (err) {
       console.error('Failed to load satker:', err)
     } finally {
@@ -118,21 +120,16 @@ export default function DataPPK() {
       payload.alasan_penonaktifan = alasanPenonaktifan
     }
 
-    const url = selectedPpk ? `/api/ppk/${selectedPpk.id}` : '/api/ppk'
-    const method = selectedPpk ? 'PUT' : 'POST'
-
-    const response = await apiFetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    if (response.ok) {
+    try {
+      if (selectedPpk) {
+        await updatePpk(selectedPpk.id, payload)
+      } else {
+        await createPpk(payload)
+      }
       closeModal()
       loadData()
-    } else {
-      const result = await response.json()
-      alert(result.error || 'Gagal menyimpan data')
+    } catch (err) {
+      alert(err.message || 'Gagal menyimpan data')
     }
   }
 
@@ -140,18 +137,12 @@ export default function DataPPK() {
     e.preventDefault()
     if (!selectedPpk) return
 
-    const response = await apiFetch(`/api/ppk/${selectedPpk.id}/mutasi`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mutasiForm),
-    })
-
-    if (response.ok) {
+    try {
+      await mutatePpk(selectedPpk.id, mutasiForm)
       closeMutasi()
       loadData()
-    } else {
-      const result = await response.json()
-      alert(result.error || 'Gagal melakukan mutasi')
+    } catch (err) {
+      alert(err.message || 'Gagal melakukan mutasi')
     }
   }
 

@@ -1,7 +1,15 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
+import {
+  getSatkerList,
+  getPpList,
+  createPp,
+  updatePp,
+  mutatePp,
+  syncPpFromPengajuan,
+} from '../lib/supabase-helpers'
 
 export default function DataPP() {
   const [ppList, setPpList] = React.useState([])
@@ -24,11 +32,8 @@ export default function DataPP() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const response = await apiFetch('/api/pp')
-      if (response.ok) {
-        const data = await response.json()
-        setPpList(data || [])
-      }
+      const data = await getPpList()
+      setPpList(data || [])
     } catch (err) {
       console.error('Failed to load PP data:', err)
     } finally {
@@ -74,11 +79,8 @@ export default function DataPP() {
     setMutasiOpen(true)
     setLoadingSatker(true)
     try {
-      const response = await apiFetch('/api/satker')
-      if (response.ok) {
-        const data = await response.json()
-        setSatkerList(data || [])
-      }
+      const data = await getSatkerList()
+      setSatkerList(data || [])
     } catch (err) {
       console.error('Failed to load satker:', err)
     } finally {
@@ -112,21 +114,16 @@ export default function DataPP() {
       payload.alasan_penonaktifan = alasanPenonaktifan
     }
 
-    const url = selectedPp ? `/api/pp/${selectedPp.id}` : '/api/pp'
-    const method = selectedPp ? 'PUT' : 'POST'
-
-    const response = await apiFetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    if (response.ok) {
+    try {
+      if (selectedPp) {
+        await updatePp(selectedPp.id, payload)
+      } else {
+        await createPp(payload)
+      }
       closeModal()
       loadData()
-    } else {
-      const result = await response.json()
-      alert(result.error || 'Gagal menyimpan data')
+    } catch (err) {
+      alert(err.message || 'Gagal menyimpan data')
     }
   }
 
@@ -134,18 +131,12 @@ export default function DataPP() {
     e.preventDefault()
     if (!selectedPp) return
 
-    const response = await apiFetch(`/api/pp/${selectedPp.id}/mutasi`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mutasiForm),
-    })
-
-    if (response.ok) {
+    try {
+      await mutatePp(selectedPp.id, mutasiForm)
       closeMutasi()
       loadData()
-    } else {
-      const result = await response.json()
-      alert(result.error || 'Gagal melakukan mutasi')
+    } catch (err) {
+      alert(err.message || 'Gagal melakukan mutasi')
     }
   }
 

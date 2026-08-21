@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { apiFetch } from '../lib/api'
+import { getPengajuanList } from '../lib/supabase-helpers'
 
 export default function DashboardVerifikator() {
   const [pengajuanList, setPengajuanList] = React.useState([])
@@ -21,10 +21,11 @@ export default function DashboardVerifikator() {
   }, [user, loading, navigate])
 
    const loadData = async () => {
-    const response = await apiFetch('/api/pengajuan')
-    if (response.ok) {
-      const data = await response.json()
+    try {
+      const data = await getPengajuanList()
       setPengajuanList(data || [])
+    } catch (err) {
+      console.error('Failed to load pengajuan:', err)
     }
   }
 

@@ -1,8 +1,12 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Select from 'react-select'
-import { apiFetch } from '../lib/api'
 import { supabase } from '../lib/supabase'
+import {
+  getSatkerList,
+  getPengajuanDetail,
+  updatePengajuan,
+} from '../lib/supabase-helpers'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024
 const FILE_LIMITS = {
@@ -93,11 +97,8 @@ export default function EditPengajuan() {
   React.useEffect(() => {
     const loadSatker = async () => {
       try {
-        const response = await apiFetch('/api/satker')
-        if (response.ok) {
-          const data = await response.json()
-          setSatkerList(data || [])
-        }
+        const data = await getSatkerList()
+        setSatkerList(data || [])
       } catch (error) {
         console.error('Error loading satker:', error)
       } finally {
@@ -110,19 +111,16 @@ export default function EditPengajuan() {
   React.useEffect(() => {
     const loadPengajuan = async () => {
       try {
-        const response = await apiFetch(`/api/pengajuan/${id}`)
-        if (response.ok) {
-          const data = await response.json()
-          if (data.formulir) {
-            setFormData({
-              nama_lengkap: data.formulir.nama_lengkap || '',
-              nip: data.formulir.nip || '',
-              jabatan: data.formulir.jabatan || '',
-              satker: data.formulir.satker || '',
-            })
-            setRevisionNote(data.formulir.alasan_revisi || '')
-            setExistingDocs(data.dokumen || [])
-          }
+        const data = await getPengajuanDetail(id)
+        if (data.formulir) {
+          setFormData({
+            nama_lengkap: data.formulir.nama_lengkap || '',
+            nip: data.formulir.nip || '',
+            jabatan: data.formulir.jabatan || '',
+            satker: data.formulir.satker || '',
+          })
+          setRevisionNote(data.formulir.alasan_revisi || '')
+          setExistingDocs(data.dokumen || [])
         }
       } catch (error) {
         console.error('Error loading pengajuan:', error)
@@ -220,20 +218,16 @@ export default function EditPengajuan() {
 
      const storagePath = `${id}-${buildStorageFilename(formData.nama_lengkap, formData.jabatan, formData.satker, jenis)}`
 
-     const signRes = await apiFetch('/api/upload-signed-url', {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ bucket, path: storagePath, contentType: file.type }),
-     })
+     const { data: signedData, error: signError } = await supabase.storage
+       .from(bucket)
+       .createSignedUploadUrl(storagePath, 60)
 
-     if (!signRes.ok) {
-       const err = await signRes.json().catch(() => ({ error: 'Gagal membuat URL upload' }))
-       throw new Error(err.error || 'Gagal membuat URL upload')
+     if (signError || !signedData?.signedUrl) {
+       console.error('Error generating signed URL:', signError)
+       throw new Error('Gagal membuat URL upload')
      }
 
-     const { signedUrl } = await signRes.json()
-
-     const uploadRes = await fetch(signedUrl, {
+     const uploadRes = await fetch(signedData.signedUrl, {
        method: 'PUT',
        headers: { 'Content-Type': file.type },
        body: file,
@@ -274,35 +268,21 @@ export default function EditPengajuan() {
           }
         }
 
-        const response = await apiFetch(`/api/pengajuan/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nama_lengkap: formData.nama_lengkap,
-            nip: formData.nip,
-            jabatan: formData.jabatan,
-            satker: formData.satker,
-            dokumen: dokumenList,
-          }),
+        const result = await updatePengajuan(id, {
+          nama_lengkap: formData.nama_lengkap,
+          nip: formData.nip,
+          jabatan: formData.jabatan,
+          satker: formData.satker,
+          dokumen: dokumenList,
         })
 
-        let data
-        try {
-          data = await response.json()
-        } catch {
-          setSubmitMessage('Gagal memproses respons server')
-          return
-        }
-
-        if (response.ok) {
+        if (result) {
           setSubmitMessage('')
           setShowSuccessPopup(true)
-        } else {
-          setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
         }
       } catch (error) {
         console.error('Error submitting pengajuan:', error)
-        setSubmitMessage('Gagal terhubung ke server')
+        setSubmitMessage(error.message || 'Gagal terhubung ke server')
       } finally {
         setSubmitting(false)
       }

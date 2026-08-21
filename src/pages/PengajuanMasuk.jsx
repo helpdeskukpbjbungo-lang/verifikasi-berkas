@@ -1,7 +1,12 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
+import {
+  getPengajuanList,
+  getPengajuanDetail,
+  updatePengajuanStatus,
+} from '../lib/supabase-helpers'
 import ProfilPopup from '../components/ProfilPopup'
 
 export default function PengajuanMasuk() {
@@ -31,10 +36,11 @@ export default function PengajuanMasuk() {
   }, [statusFilter])
 
   const loadData = async () => {
-    const response = await apiFetch('/api/pengajuan')
-    if (response.ok) {
-      const data = await response.json()
+    try {
+      const data = await getPengajuanList()
       setPengajuanList(data || [])
+    } catch (err) {
+      console.error('Failed to load pengajuan:', err)
     }
   }
 
@@ -70,13 +76,8 @@ export default function PengajuanMasuk() {
     setIsModalOpen(true)
     setLoadingDetail(true)
     try {
-      const response = await apiFetch(`/api/pengajuan/${item.id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setDetailData(data)
-      } else {
-        setDetailData(null)
-      }
+      const data = await getPengajuanDetail(item.id)
+      setDetailData(data)
     } catch (err) {
       setDetailData(null)
     } finally {
@@ -104,24 +105,14 @@ export default function PengajuanMasuk() {
     if (!selectedItem) return
     setLoadingAction(true)
     try {
-      const response = await apiFetch(`/api/pengajuan/${selectedItem.id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, alasan_ditolak: alasanDitolak, alasan_revisi: alasanRevisi }),
-      })
-      if (response.ok) {
-        closeModal()
-        loadData()
-        setShowRejectForm(false)
-        setRejectReason('')
-        setShowRevisionForm(false)
-        setRevisionNote('')
-      } else {
-        const result = await response.json()
-        alert(`Gagal: ${result.error || 'Unknown error'}`)
-      }
+      await updatePengajuanStatus(selectedItem.id, { status, alasan_ditolak: alasanDitolak, alasan_revisi: alasanRevisi })
+      closeModal()
+      loadData()
+      setShowRejectForm(false)
+      setRejectReason('')
+      setShowRevisionForm(false)
+      setRevisionNote('')
     } catch (err) {
-      console.error('Failed to update status:', err)
       alert(`Gagal memperbarui status: ${err.message}`)
     } finally {
       setLoadingAction(false)

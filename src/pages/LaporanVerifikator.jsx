@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { apiFetch } from '../lib/api'
+import { getPengajuanList } from '../lib/supabase-helpers'
 import ProfilPopup from '../components/ProfilPopup'
 
 export default function LaporanVerifikator() {
@@ -27,10 +27,11 @@ export default function LaporanVerifikator() {
   }, [statusFilter])
 
   const loadData = async () => {
-    const response = await apiFetch('/api/pengajuan')
-    if (response.ok) {
-      const data = await response.json()
+    try {
+      const data = await getPengajuanList()
       setPengajuanList(data || [])
+    } catch (err) {
+      console.error('Failed to load pengajuan:', err)
     }
   }
 
@@ -92,11 +93,55 @@ export default function LaporanVerifikator() {
 
   const handleExport = async () => {
     try {
-      const response = await apiFetch('/api/pengajuan/export/xlsx')
-      if (!response.ok) {
-        throw new Error('Export failed')
+      const { default: ExcelJS } = await import('exceljs')
+      const workbook = new ExcelJS.Workbook()
+      const worksheet = workbook.addWorksheet('Rekap Pengajuan')
+
+      worksheet.columns = [
+        { header: 'ID', key: 'id', width: 36 },
+        { header: 'Nama Lengkap', key: 'nama_lengkap', width: 25 },
+        { header: 'NIP', key: 'nip', width: 20 },
+        { header: 'Jabatan', key: 'jabatan', width: 25 },
+        { header: 'Satuan Kerja', key: 'satker', width: 25 },
+        { header: 'Status', key: 'status', width: 20 },
+        { header: 'Tanggal Pengajuan', key: 'created_at', width: 22 },
+        { header: 'Tanggal Selesai', key: 'updated_at', width: 22 },
+        { header: 'Waktu Proses (Hari)', key: 'process_days', width: 20 },
+        { header: 'Alasan Penolakan', key: 'alasan_ditolak', width: 35 },
+        { header: 'Alasan Revisi', key: 'alasan_revisi', width: 35 },
+      ]
+
+      worksheet.getRow(1).font = { bold: true }
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' },
       }
-      const blob = await response.blob()
+
+      const rows = (pengajuanList || []).map(item => {
+        const created = item.created_at || ''
+        const updated = item.updated_at || ''
+        const processDays = created && updated ? Math.floor((new Date(updated) - new Date(created)) / (1000 * 60 * 60 * 24)) : ''
+        return {
+          id: item.id,
+          nama_lengkap: item.nama_lengkap,
+          nip: item.nip,
+          jabatan: item.jabatan || '',
+          satker: item.satker || '',
+          status: item.status,
+          created_at: created,
+          updated_at: updated,
+          process_days: processDays,
+          alasan_ditolak: item.alasan_ditolak || '',
+          alasan_revisi: item.alasan_revisi || '',
+        }
+      })
+
+      rows.forEach(row => worksheet.addRow(row))
+
+      const buffer = await workbook.xlsx.writeBuffer()
+
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

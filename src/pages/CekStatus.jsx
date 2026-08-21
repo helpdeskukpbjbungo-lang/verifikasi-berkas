@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
+import { getPengajuanList } from '../lib/supabase-helpers'
 
 export default function CekStatus() {
   const navigate = useNavigate()
@@ -36,11 +37,7 @@ export default function CekStatus() {
     setLoading(true)
     setError(false)
     setHistoryPage(1)
-    apiFetch(`/api/pengajuan?_t=${Date.now()}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Network response was not ok')
-        return res.json()
-      })
+    getPengajuanList()
       .then((data) => {
         const matched = (Array.isArray(data) ? data : []).filter((item) => String(item.nip || '').trim() === nip)
         setPengajuanList(matched)

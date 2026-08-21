@@ -1,7 +1,8 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
+import { getPengajuanDetail, updatePengajuanStatus } from '../lib/supabase-helpers'
 
 export default function DetailPengajuan() {
   const { id } = useParams()
@@ -28,15 +29,9 @@ export default function DetailPengajuan() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const response = await apiFetch(`/api/pengajuan/${id}`)
-      if (response.ok) {
-        const data = await response.json()
-        setFormulir(data.formulir)
-        setDokumen(data.dokumen || [])
-      } else {
-        setFormulir(null)
-        setDokumen([])
-      }
+      const data = await getPengajuanDetail(id)
+      setFormulir(data.formulir)
+      setDokumen(data.dokumen || [])
     } catch (err) {
       setFormulir(null)
       setDokumen([])
@@ -85,32 +80,20 @@ export default function DetailPengajuan() {
   const updateStatus = async (status, alasanDitolak = null, alasanRevisi = null) => {
     setSubmitting(true)
     try {
-      const url = `/api/pengajuan/${id}/status`
       const payload = { status, alasan_ditolak: alasanDitolak, alasan_revisi: alasanRevisi }
-      console.log('Updating status:', { url, payload, id })
+      console.log('Updating status:', { id, payload })
 
-      const response = await apiFetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      const result = await updatePengajuanStatus(id, payload)
+      console.log('Update status response:', result)
 
-      const result = await response.json()
-      console.log('Update status response:', { status: response.status, ok: response.ok, result })
-
-      if (response.ok) {
-        await loadData()
-        setShowRejectForm(false)
-        setRejectReason('')
-        setShowRevisionForm(false)
-        setRevisionNote('')
-        alert('Status berhasil diperbarui')
-      } else {
-        alert(`Gagal: ${result.error || 'Unknown error'}`)
-      }
+      await loadData()
+      setShowRejectForm(false)
+      setRejectReason('')
+      setShowRevisionForm(false)
+      setRevisionNote('')
+      alert('Status berhasil diperbarui')
     } catch (err) {
-      console.error('Gagal memperbarui status:', err)
-      alert(`Gagal memperbarui status: ${err.message}`)
+      alert(`Gagal: ${err.message || 'Unknown error'}`)
     } finally {
       setSubmitting(false)
     }

@@ -2,8 +2,11 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Select from 'react-select'
 import logoLpse from '../img/logo-lpse-bungo.png'
-import { apiFetch } from '../lib/api'
 import { supabase } from '../lib/supabase'
+import {
+  getSatkerList,
+  createPengajuan,
+} from '../lib/supabase-helpers'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const FILE_LIMITS = {
@@ -61,11 +64,8 @@ export default function PengajuanForm() {
   React.useEffect(() => {
     const loadSatker = async () => {
       try {
-        const response = await apiFetch('/api/satker')
-        if (response.ok) {
-          const data = await response.json()
-          setSatkerList(data || [])
-        }
+        const data = await getSatkerList()
+        setSatkerList(data || [])
       } catch (error) {
         console.error('Error loading satker:', error)
       } finally {
@@ -144,20 +144,16 @@ export default function PengajuanForm() {
 
     const storagePath = `${Date.now()}-${buildStorageFilename(formData.nama_lengkap, formData.jabatan, formData.satker, jenis)}`
 
-    const signRes = await apiFetch('/api/upload-signed-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bucket, path: storagePath, contentType: file.type }),
-    })
+    const { data: signedData, error: signError } = await supabase.storage
+      .from(bucket)
+      .createSignedUploadUrl(storagePath, 60)
 
-    if (!signRes.ok) {
-      const err = await signRes.json().catch(() => ({ error: 'Gagal membuat URL upload' }))
-      throw new Error(err.error || 'Gagal membuat URL upload')
+    if (signError || !signedData?.signedUrl) {
+      console.error('Error generating signed URL:', signError)
+      throw new Error('Gagal membuat URL upload')
     }
 
-    const { signedUrl } = await signRes.json()
-
-    const uploadRes = await fetch(signedUrl, {
+    const uploadRes = await fetch(signedData.signedUrl, {
       method: 'PUT',
       headers: { 'Content-Type': file.type },
       body: file,
@@ -213,45 +209,27 @@ export default function PengajuanForm() {
         dokumen: dokumenList.map(d => d.jenis_dokumen),
       })
 
-      const response = await apiFetch('/api/pengajuan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nama_lengkap: formData.nama_lengkap,
-          nip: formData.nip,
-          jabatan: formData.jabatan,
-          satker: formData.satker,
-          dokumen: dokumenList,
-        }),
+      const result = await createPengajuan({
+        nama_lengkap: formData.nama_lengkap,
+        nip: formData.nip,
+        jabatan: formData.jabatan,
+        satker: formData.satker,
+        dokumen: dokumenList,
       })
 
-      console.log('Response status:', response.status)
+      console.log('Response data:', result)
 
-      let data
-      try {
-        data = await response.json()
-        console.log('Response data:', data)
-      } catch (err) {
-        console.error('Response parse error:', err)
-        setSubmitMessage('Gagal memproses respons server')
-        return
-      }
-
-      if (response.ok) {
-        setFormData({
-          nama_lengkap: '',
-          nip: '',
-          jabatan: '',
-          satker: '',
-        })
-        setFiles({})
-        setShowSuccessPopup(true)
-      } else {
-        setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
-      }
+      setFormData({
+        nama_lengkap: '',
+        nip: '',
+        jabatan: '',
+        satker: '',
+      })
+      setFiles({})
+      setShowSuccessPopup(true)
     } catch (error) {
       console.error('Error submitting pengajuan:', error)
-      setSubmitMessage('Gagal terhubung ke server')
+      setSubmitMessage(error.message || 'Gagal terhubung ke server')
     } finally {
       setSubmitting(false)
     }
