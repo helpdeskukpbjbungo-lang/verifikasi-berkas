@@ -1,39 +1,8 @@
 import express from 'express'
-import multer from 'multer'
-import path from 'path'
 import { supabase } from '../server/lib/supabase.js'
 
 const app = express()
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true)
-    } else {
-      cb(new Error('Only PDF files are allowed'), false)
-    }
-  },
-})
-
-const FILE_LIMITS = {
-  surat_permohonan: 5 * 1024 * 1024,
-  pakta_integritas: 2 * 1024 * 1024,
-  sk_terbaru: 10 * 1024 * 1024,
-  surat_rekomendasi_ukpbj: 2 * 1024 * 1024,
-  sertifikat_level1: 2 * 1024 * 1024,
-  sk_kpa_sertifikat_pbj: 5 * 1024 * 1024,
-}
-
-const FILE_LABELS = {
-  surat_permohonan: 'Surat Permohonan Verifikasi',
-  pakta_integritas: 'Pakta Integritas',
-  sk_terbaru: 'SK PP/PPK/PA Terbaru',
-  surat_rekomendasi_ukpbj: 'Surat Rekomendasi UKPBJ',
-  sertifikat_level1: 'Sertifikat PBJ Level-1',
-  sk_kpa_sertifikat_pbj: 'SK KPA / Sertifikat PBJ Level-1',
-}
+app.use(express.json())
 
 const bucketByJenis = {
   surat_permohonan: 'Surat Permohonan',
@@ -59,20 +28,49 @@ function buildStorageFilename(namaLengkap, jabatan, satker, jenisDokumen) {
   return `${jenis} - ${nama} - ${jab} - ${sat}.pdf`
 }
 
-app.post('/', upload.fields([
-  { name: 'surat_permohonan', maxCount: 1 },
-  { name: 'pakta_integritas', maxCount: 1 },
-  { name: 'sk_terbaru', maxCount: 1 },
-  { name: 'surat_rekomendasi_ukpbj', maxCount: 1 },
-  { name: 'sertifikat_level1', maxCount: 1 },
-  { name: 'sk_kpa_sertifikat_pbj', maxCount: 1 },
-]), async (req, res) => {
-  try {
-    console.log('Received pengajuan request')
-    console.log('Body fields:', { nama_lengkap: req.body.nama_lengkap, nip: req.body.nip, jabatan: req.body.jabatan, satker: req.body.satker })
-    console.log('Files received:', Object.keys(req.files || {}))
+async function upsertDokumen(formulirId, dokumenList) {
+  const dokumenTypes = ['surat_permohonan', 'pakta_integritas', 'sk_terbaru', 'surat_rekomendasi_ukpbj', 'sertifikat_level1', 'sk_kpa_sertifikat_pbj']
+  const incomingTypes = new Set((dokumenList || []).map(d => d.jenis_dokumen))
 
-    const { nama_lengkap, nip, jabatan, satker } = req.body
+  const { error: deleteError } = await supabase
+    .from('dokumen')
+    .delete()
+    .eq('formulir_id', formulirId)
+    .in('jenis_dokumen', Array.from(incomingTypes))
+
+  if (deleteError) {
+    console.error('Delete old dokumen error:', deleteError)
+  }
+
+  for (const doc of dokumenList || []) {
+    if (!dokumenTypes.includes(doc.jenis_dokumen)) continue
+
+    const bucket = bucketByJenis[doc.jenis_dokumen]
+    const storagePath = doc.path
+    const publicUrlData = supabase.storage.from(bucket).getPublicUrl(storagePath)
+
+    const { error: dokumenError } = await supabase
+      .from('dokumen')
+      .insert({
+        formulir_id: formulirId,
+        jenis_dokumen: doc.jenis_dokumen,
+        filename: doc.filename || storagePath.split('/').pop(),
+        filepath: publicUrlData.publicUrl,
+        bucket,
+        path: storagePath,
+        size_bytes: doc.size_bytes || null,
+      })
+
+    if (dokumenError) {
+      console.error('Database error:', dokumenError)
+      throw new Error(`Gagal menyimpan data ${doc.jenis_dokumen}: ${dokumenError.message}`)
+    }
+  }
+}
+
+app.post('/', async (req, res) => {
+  try {
+    const { nama_lengkap, nip, jabatan, satker, dokumen } = req.body
 
     if (!nama_lengkap || !nip) {
       return res.status(400).json({ error: 'Nama Lengkap dan NIP wajib diisi' })
@@ -95,70 +93,12 @@ app.post('/', upload.fields([
       throw formulirError || new Error('Gagal menyimpan formulir')
     }
 
-    const formulirId = formulir.id
-
-    const dokumenTypes = ['surat_permohonan', 'pakta_integritas', 'sk_terbaru', 'surat_rekomendasi_ukpbj', 'sertifikat_level1', 'sk_kpa_sertifikat_pbj']
-    for (const jenis of dokumenTypes) {
-      const file = req.files?.[jenis]?.[0]
-      if (!file) continue
-
-      console.log(`Processing ${jenis}:`, file.size, 'bytes')
-
-      const limit = FILE_LIMITS[jenis]
-      if (limit && file.size > limit) {
-        return res.status(400).json({
-          error: `Ukuran file ${FILE_LABELS[jenis] || jenis} melebihi batas maksimal ${Math.round(limit / 1024 / 1024)}MB`
-        })
-      }
-
-      const bucket = bucketByJenis[jenis]
-      const filename = buildStorageFilename(nama_lengkap, jabatan, satker, jenis)
-      const storagePath = `${formulirId}/${filename}`
-
-      console.log(`Uploading ${jenis} to bucket ${bucket}, path ${storagePath}`)
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(storagePath, file.buffer, {
-          contentType: file.mimetype,
-          upsert: true,
-        })
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError)
-        return res.status(500).json({ error: `Gagal mengupload ${FILE_LABELS[jenis] || jenis}: ${uploadError.message}` })
-      }
-
-      console.log(`Upload success: ${jenis}`)
-
-      const { data: publicUrlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(storagePath)
-
-      const { error: dokumenError } = await supabase
-        .from('dokumen')
-        .insert({
-          formulir_id: formulirId,
-          jenis_dokumen: jenis,
-          filename,
-          filepath: publicUrlData.publicUrl,
-          bucket,
-          path: storagePath,
-          size_bytes: file.size
-        })
-
-      if (dokumenError) {
-        console.error('Database error:', dokumenError)
-        return res.status(500).json({ error: `Gagal menyimpan data ${FILE_LABELS[jenis] || jenis}: ${dokumenError.message}` })
-      }
-
-      console.log(`Database insert success: ${jenis}`)
-    }
+    await upsertDokumen(formulir.id, dokumen)
 
     res.status(201).json({
       message: 'Pengajuan berhasil dikirim. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.',
-      pengajuanId: formulirId,
-      pemohonId: formulirId,
+      pengajuanId: formulir.id,
+      pemohonId: formulir.id,
     })
   } catch (error) {
     console.error('Error submitting pengajuan:', error)
@@ -286,17 +226,10 @@ app.get('/:id', async (req, res) => {
   }
 })
 
-app.put('/:id', upload.fields([
-  { name: 'surat_permohonan', maxCount: 1 },
-  { name: 'pakta_integritas', maxCount: 1 },
-  { name: 'sk_terbaru', maxCount: 1 },
-  { name: 'surat_rekomendasi_ukpbj', maxCount: 1 },
-  { name: 'sertifikat_level1', maxCount: 1 },
-  { name: 'sk_kpa_sertifikat_pbj', maxCount: 1 },
-]), async (req, res) => {
+app.put('/:id', async (req, res) => {
   try {
     const { id } = req.params
-    const { nama_lengkap, nip, jabatan, satker } = req.body
+    const { nama_lengkap, nip, jabatan, satker, dokumen } = req.body
 
     const { data: existing, error: fetchError } = await supabase
       .from('formulir_pengajuan')
@@ -332,65 +265,7 @@ app.put('/:id', upload.fields([
       return res.status(500).json({ error: 'Gagal memperbarui data formulir' })
     }
 
-    const dokumenTypes = ['surat_permohonan', 'pakta_integritas', 'sk_terbaru', 'surat_rekomendasi_ukpbj', 'sertifikat_level1', 'sk_kpa_sertifikat_pbj']
-    for (const jenis of dokumenTypes) {
-      const file = req.files?.[jenis]?.[0]
-      if (!file) continue
-
-      const limit = FILE_LIMITS[jenis]
-      if (limit && file.size > limit) {
-        return res.status(400).json({
-          error: `Ukuran file ${FILE_LABELS[jenis] || jenis} melebihi batas maksimal ${Math.round(limit / 1024 / 1024)}MB`
-        })
-      }
-
-      const bucket = bucketByJenis[jenis]
-      const filename = buildStorageFilename(updatePayload.nama_lengkap, updatePayload.jabatan, updatePayload.satker, jenis)
-      const storagePath = `${id}/${filename}`
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(storagePath, file.buffer, {
-          contentType: file.mimetype,
-          upsert: true,
-        })
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError)
-        return res.status(500).json({ error: `Gagal mengupload ${FILE_LABELS[jenis] || jenis}` })
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(storagePath)
-
-      const { error: deleteOld } = await supabase
-        .from('dokumen')
-        .delete()
-        .eq('formulir_id', id)
-        .eq('jenis_dokumen', jenis)
-
-      if (deleteOld) {
-        console.error('Delete old document error:', deleteOld)
-      }
-
-      const { error: dokumenError } = await supabase
-        .from('dokumen')
-        .insert({
-          formulir_id: id,
-          jenis_dokumen: jenis,
-          filename,
-          filepath: publicUrlData.publicUrl,
-          bucket,
-          path: storagePath,
-          size_bytes: file.size
-        })
-
-      if (dokumenError) {
-        console.error('Database error:', dokumenError)
-        return res.status(500).json({ error: `Gagal menyimpan data ${FILE_LABELS[jenis] || jenis}` })
-      }
-    }
+    await upsertDokumen(id, dokumen)
 
     res.status(200).json({
       message: 'Pengajuan berhasil diperbarui.',

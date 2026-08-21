@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Select from 'react-select'
 import logoLpse from '../img/logo-lpse-bungo.png'
 import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const FILE_LIMITS = {
@@ -12,6 +13,30 @@ const FILE_LIMITS = {
   surat_rekomendasi_ukpbj: 2 * 1024 * 1024,
   sertifikat_level1: 2 * 1024 * 1024,
   sk_kpa_sertifikat_pbj: 2 * 1024 * 1024,
+}
+
+const bucketByJenis = {
+  surat_permohonan: 'Surat Permohonan',
+  pakta_integritas: 'Pakta Integritas',
+  sk_terbaru: 'SK Terbaru',
+  surat_rekomendasi_ukpbj: 'Surat Rekomendasi UKPBJ',
+  sertifikat_level1: 'Sertifikat Level 1',
+  sk_kpa_sertifikat_pbj: 'SK KPA atau Sertifikat PBJ Level-1',
+}
+
+function sanitizeFilenamePart(str) {
+  return String(str || '')
+    .replace(/[^a-zA-Z0-9 \-_.]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim() || 'tanpa-nama'
+}
+
+function buildStorageFilename(namaLengkap, jabatan, satker, jenisDokumen) {
+  const nama = sanitizeFilenamePart(namaLengkap)
+  const jab = sanitizeFilenamePart(jabatan)
+  const sat = sanitizeFilenamePart(satker)
+  const jenis = sanitizeFilenamePart(jenisDokumen)
+  return `${jenis} - ${nama} - ${jab} - ${sat}.pdf`
 }
 
 export default function PengajuanForm() {
@@ -113,6 +138,44 @@ export default function PengajuanForm() {
     !nipError
   )
 
+  async function uploadFileDirect(jenis, file) {
+    const bucket = bucketByJenis[jenis]
+    if (!bucket) return null
+
+    const storagePath = `${Date.now()}-${buildStorageFilename(formData.nama_lengkap, formData.jabatan, formData.satker, jenis)}`
+
+    const signRes = await apiFetch('/api/upload-signed-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucket, path: storagePath, contentType: file.type }),
+    })
+
+    if (!signRes.ok) {
+      const err = await signRes.json().catch(() => ({ error: 'Gagal membuat URL upload' }))
+      throw new Error(err.error || 'Gagal membuat URL upload')
+    }
+
+    const { signedUrl } = await signRes.json()
+
+    const uploadRes = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    })
+
+    if (!uploadRes.ok) {
+      throw new Error('Gagal mengupload file ke storage')
+    }
+
+    return {
+      jenis_dokumen: jenis,
+      path: storagePath,
+      bucket,
+      size_bytes: file.size,
+      filename: file.name,
+    }
+  }
+
   const handleBatal = () => {
     setFormData({
       nama_lengkap: '',
@@ -133,29 +196,33 @@ export default function PengajuanForm() {
     setSubmitMessage('')
 
     try {
-      const formDataToSend = new FormData()
-      formDataToSend.append('nama_lengkap', formData.nama_lengkap)
-      formDataToSend.append('nip', formData.nip)
-      formDataToSend.append('jabatan', formData.jabatan)
-      formDataToSend.append('satker', formData.satker)
-
-      Object.entries(files).forEach(([jenis, file]) => {
-        if (file) {
-          formDataToSend.append(jenis, file)
+      const dokumenList = []
+      for (const [jenis, file] of Object.entries(files)) {
+        if (!file) continue
+        const uploaded = await uploadFileDirect(jenis, file)
+        if (uploaded) {
+          dokumenList.push(uploaded)
         }
-      })
+      }
 
       console.log('Submitting pengajuan...', {
         nama_lengkap: formData.nama_lengkap,
         nip: formData.nip,
         jabatan: formData.jabatan,
         satker: formData.satker,
-        files: Object.keys(files).filter(k => files[k])
+        dokumen: dokumenList.map(d => d.jenis_dokumen),
       })
 
       const response = await apiFetch('/api/pengajuan', {
         method: 'POST',
-        body: formDataToSend,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama_lengkap: formData.nama_lengkap,
+          nip: formData.nip,
+          jabatan: formData.jabatan,
+          satker: formData.satker,
+          dokumen: dokumenList,
+        }),
       })
 
       console.log('Response status:', response.status)

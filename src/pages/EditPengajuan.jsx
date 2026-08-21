@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Select from 'react-select'
 import { apiFetch } from '../lib/api'
+import { supabase } from '../lib/supabase'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024
 const FILE_LIMITS = {
@@ -11,6 +12,30 @@ const FILE_LIMITS = {
   surat_rekomendasi_ukpbj: 2 * 1024 * 1024,
   sertifikat_level1: 2 * 1024 * 1024,
   sk_kpa_sertifikat_pbj: 2 * 1024 * 1024,
+}
+
+const bucketByJenis = {
+  surat_permohonan: 'Surat Permohonan',
+  pakta_integritas: 'Pakta Integritas',
+  sk_terbaru: 'SK Terbaru',
+  surat_rekomendasi_ukpbj: 'Surat Rekomendasi UKPBJ',
+  sertifikat_level1: 'Sertifikat Level 1',
+  sk_kpa_sertifikat_pbj: 'SK KPA atau Sertifikat PBJ Level-1',
+}
+
+function sanitizeFilenamePart(str) {
+  return String(str || '')
+    .replace(/[^a-zA-Z0-9 \-_.]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim() || 'tanpa-nama'
+}
+
+function buildStorageFilename(namaLengkap, jabatan, satker, jenisDokumen) {
+  const nama = sanitizeFilenamePart(namaLengkap)
+  const jab = sanitizeFilenamePart(jabatan)
+  const sat = sanitizeFilenamePart(satker)
+  const jenis = sanitizeFilenamePart(jenisDokumen)
+  return `${jenis} - ${nama} - ${jab} - ${sat}.pdf`
 }
 
 export default function EditPengajuan() {
@@ -169,77 +194,119 @@ export default function EditPengajuan() {
       (formData.jabatan !== 'Pejabat Pembuat Komitmen (PPK)' || /kecamatan/i.test(formData.satker || '') || ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_kpa_sertifikat_pbj')) ? !!files['sk_kpa_sertifikat_pbj'] : true))
   )
 
-  const getMissingDocuments = () => {
-    const missing = []
-    if (!formData.nama_lengkap) missing.push('nama_lengkap')
-    if (!formData.nip) missing.push('nip')
-    if (nipError) missing.push('nip')
-    if (!formData.jabatan) missing.push('jabatan')
-    if (!formData.satker) missing.push('satker')
-    if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_permohonan')) && !files['surat_permohonan']) missing.push('surat_permohonan')
-    if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('pakta_integritas')) && !files['pakta_integritas']) missing.push('pakta_integritas')
-    if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_terbaru')) && !files['sk_terbaru']) missing.push('sk_terbaru')
-    if (formData.jabatan === 'Pejabat Pengadaan (PP)') {
-      if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_rekomendasi_ukpbj')) && !files['surat_rekomendasi_ukpbj']) missing.push('surat_rekomendasi_ukpbj')
-      if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sertifikat_level1')) && !files['sertifikat_level1']) missing.push('sertifikat_level1')
-    }
-    if (formData.jabatan === 'Pejabat Pembuat Komitmen (PPK)' && !/kecamatan/i.test(formData.satker || '')) {
-      if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_kpa_sertifikat_pbj')) && !files['sk_kpa_sertifikat_pbj']) missing.push('sk_kpa_sertifikat_pbj')
-    }
-    return missing
-  }
+   const getMissingDocuments = () => {
+     const missing = []
+     if (!formData.nama_lengkap) missing.push('nama_lengkap')
+     if (!formData.nip) missing.push('nip')
+     if (nipError) missing.push('nip')
+     if (!formData.jabatan) missing.push('jabatan')
+     if (!formData.satker) missing.push('satker')
+     if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_permohonan')) && !files['surat_permohonan']) missing.push('surat_permohonan')
+     if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('pakta_integritas')) && !files['pakta_integritas']) missing.push('pakta_integritas')
+     if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_terbaru')) && !files['sk_terbaru']) missing.push('sk_terbaru')
+     if (formData.jabatan === 'Pejabat Pengadaan (PP)') {
+       if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('surat_rekomendasi_ukpbj')) && !files['surat_rekomendasi_ukpbj']) missing.push('surat_rekomendasi_ukpbj')
+       if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sertifikat_level1')) && !files['sertifikat_level1']) missing.push('sertifikat_level1')
+     }
+     if (formData.jabatan === 'Pejabat Pembuat Komitmen (PPK)' && !/kecamatan/i.test(formData.satker || '')) {
+       if ((revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_kpa_sertifikat_pbj')) && !files['sk_kpa_sertifikat_pbj']) missing.push('sk_kpa_sertifikat_pbj')
+     }
+     return missing
+   }
 
-   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitMessage('')
-    setMissingDocTypes(new Set())
+   async function uploadFileDirect(jenis, file) {
+     const bucket = bucketByJenis[jenis]
+     if (!bucket) return null
 
-    if (!isFormComplete) {
-      const missing = getMissingDocuments()
-      setMissingDocTypes(new Set(missing))
-      return
-    }
+     const storagePath = `${id}-${buildStorageFilename(formData.nama_lengkap, formData.jabatan, formData.satker, jenis)}`
 
-    setSubmitting(true)
-    try {
-      const formDataToSend = new FormData()
-      formDataToSend.append('nama_lengkap', formData.nama_lengkap)
-      formDataToSend.append('nip', formData.nip)
-      formDataToSend.append('jabatan', formData.jabatan)
-      formDataToSend.append('satker', formData.satker)
+     const signRes = await apiFetch('/api/upload-signed-url', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ bucket, path: storagePath, contentType: file.type }),
+     })
 
-      Object.entries(files).forEach(([jenis, file]) => {
-        if (file) {
-          formDataToSend.append(jenis, file)
-        }
-      })
+     if (!signRes.ok) {
+       const err = await signRes.json().catch(() => ({ error: 'Gagal membuat URL upload' }))
+       throw new Error(err.error || 'Gagal membuat URL upload')
+     }
 
-      const response = await apiFetch(`/api/pengajuan/${id}`, {
-        method: 'PUT',
-        body: formDataToSend,
-      })
+     const { signedUrl } = await signRes.json()
 
-      let data
-      try {
-        data = await response.json()
-      } catch {
-        setSubmitMessage('Gagal memproses respons server')
+     const uploadRes = await fetch(signedUrl, {
+       method: 'PUT',
+       headers: { 'Content-Type': file.type },
+       body: file,
+     })
+
+     if (!uploadRes.ok) {
+       throw new Error('Gagal mengupload file ke storage')
+     }
+
+     return {
+       jenis_dokumen: jenis,
+       path: storagePath,
+       bucket,
+       size_bytes: file.size,
+       filename: file.name,
+     }
+   }
+
+    const handleSubmit = async (e) => {
+      e.preventDefault()
+      setSubmitMessage('')
+      setMissingDocTypes(new Set())
+
+      if (!isFormComplete) {
+        const missing = getMissingDocuments()
+        setMissingDocTypes(new Set(missing))
         return
       }
 
-      if (response.ok) {
-        setSubmitMessage('')
-        setShowSuccessPopup(true)
-      } else {
-        setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
+      setSubmitting(true)
+      try {
+        const dokumenList = []
+        for (const [jenis, file] of Object.entries(files)) {
+          if (!file) continue
+          const uploaded = await uploadFileDirect(jenis, file)
+          if (uploaded) {
+            dokumenList.push(uploaded)
+          }
+        }
+
+        const response = await apiFetch(`/api/pengajuan/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nama_lengkap: formData.nama_lengkap,
+            nip: formData.nip,
+            jabatan: formData.jabatan,
+            satker: formData.satker,
+            dokumen: dokumenList,
+          }),
+        })
+
+        let data
+        try {
+          data = await response.json()
+        } catch {
+          setSubmitMessage('Gagal memproses respons server')
+          return
+        }
+
+        if (response.ok) {
+          setSubmitMessage('')
+          setShowSuccessPopup(true)
+        } else {
+          setSubmitMessage(data?.error || 'Gagal mengirim pengajuan')
+        }
+      } catch (error) {
+        console.error('Error submitting pengajuan:', error)
+        setSubmitMessage('Gagal terhubung ke server')
+      } finally {
+        setSubmitting(false)
       }
-    } catch (error) {
-      console.error('Error submitting pengajuan:', error)
-      setSubmitMessage('Gagal terhubung ke server')
-    } finally {
-      setSubmitting(false)
     }
-  }
 
   if (loading) {
     return (
