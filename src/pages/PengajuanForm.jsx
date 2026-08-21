@@ -379,25 +379,25 @@ export default function PengajuanForm() {
                    <div className="bg-secondary-container/20 p-sm rounded-lg">
                      <span className="material-symbols-outlined text-secondary">verified</span>
                    </div>
-                   <div>
-                     <p className="font-label-md text-label-md text-primary">Surat Rekomendasi UKPBJ</p>
-                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
-                     <p className="text-[11px] text-black">Surat rekomendasi dari UKPBJ setelah surat permohonan disetujui</p>
+                    <div>
+                      <p className="font-label-md text-label-md text-primary">Surat Rekomendasi UKPBJ</p>
+                      <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-sm">
-                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
-                    Pilih File
-                    <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_rekomendasi_ukpbj', e.target.files[0])} />
-                  </label>
-                  {files['surat_rekomendasi_ukpbj'] && (
-                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
-                      {files['surat_rekomendasi_ukpbj'].name}
-                    </span>
-                  )}
-                  <span className="material-symbols-outlined text-outline cursor-help" title="Surat rekomendasi dari UKPBJ setelah surat permohonan disetujui">info</span>
-                </div>
+                  <div className="flex flex-col gap-sm w-full">
+                    <p className="text-[11px] text-black md:hidden">Surat rekomendasi dari UKPBJ setelah surat permohonan disetujui</p>
+                    <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm w-full">
+                        Pilih File
+                        <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_rekomendasi_ukpbj', e.target.files[0])} />
+                      </label>
+                      {files['surat_rekomendasi_ukpbj'] && (
+                        <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          {files['surat_rekomendasi_ukpbj'].name}
+                        </span>
+                      )}
+                      <span className="material-symbols-outlined text-outline cursor-help hidden" title="Surat rekomendasi dari UKPBJ setelah surat permohonan disetujui">info</span>
+                  </div>
                 {fileErrors['surat_rekomendasi_ukpbj'] && (
                   <p className="text-[11px] text-error mt-1">{fileErrors['surat_rekomendasi_ukpbj']}</p>
                 )}
@@ -410,25 +410,25 @@ export default function PengajuanForm() {
                    <div className="bg-secondary-container/20 p-sm rounded-lg">
                      <span className="material-symbols-outlined text-secondary">verified</span>
                    </div>
-                   <div>
-                      <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1 / SK KPA bagi PPK</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
-                    <p className="text-[11px] text-black">Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP / SK KPA bagi PPK </p>
-                   </div>
-                 </div>
-                 <div className="flex items-center gap-sm">
-                   <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
-                     Pilih File
-                     <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_kpa_sertifikat_pbj', e.target.files[0])} />
-                   </label>
-                   {files['sk_kpa_sertifikat_pbj'] && (
-                     <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
-                       <span className="material-symbols-outlined text-sm">check_circle</span>
-                       {files['sk_kpa_sertifikat_pbj'].name}
-                     </span>
-                   )}
-                   <span className="material-symbols-outlined text-outline cursor-help" title="SK KPA atau Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP">info</span>
-                 </div>
+                    <div>
+                       <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1 / SK KPA bagi PPK</p>
+                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-sm w-full">
+                    <p className="text-[11px] text-black md:hidden">Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP / SK KPA bagi PPK</p>
+                    <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm w-full">
+                        Pilih File
+                        <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_kpa_sertifikat_pbj', e.target.files[0])} />
+                      </label>
+                      {files['sk_kpa_sertifikat_pbj'] && (
+                        <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          {files['sk_kpa_sertifikat_pbj'].name}
+                        </span>
+                      )}
+                      <span className="material-symbols-outlined text-outline cursor-help hidden" title="SK KPA atau Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP">info</span>
+                  </div>
                  {fileErrors['sk_kpa_sertifikat_pbj'] && (
                    <p className="text-[11px] text-error mt-1">{fileErrors['sk_kpa_sertifikat_pbj']}</p>
                  )}
@@ -440,25 +440,25 @@ export default function PengajuanForm() {
                 <div className="bg-secondary-container/20 p-sm rounded-lg">
                   <span className="material-symbols-outlined text-secondary">description</span>
                 </div>
-                <div>
-                   <p className="font-label-md text-label-md text-primary">Surat Permohonan Verifikasi</p>
-                   <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
-                   <p className="text-[11px] text-black">Wajib diunggah dengan tanda tangan basah dan stempel atau menggunakan TTE</p>
+                 <div>
+                    <p className="font-label-md text-label-md text-primary">Surat Permohonan Verifikasi</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                 </div>
+               </div>
+                <div className="flex flex-col gap-sm w-full">
+                  <p className="text-[11px] text-black md:hidden">Wajib diunggah dengan tanda tangan basah dan stempel atau menggunakan TTE</p>
+                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm w-full">
+                    Pilih File
+                    <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_permohonan', e.target.files[0])} />
+                  </label>
+                  {files['surat_permohonan'] && (
+                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      {files['surat_permohonan'].name}
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined text-outline cursor-help hidden" title="Wajib diunggah dengan tanda tangan basah dan stempel">info</span>
                 </div>
-              </div>
-              <div className="flex items-center gap-sm">
-                <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
-                  Pilih File
-                  <input className="hidden" type="file" onChange={(e) => handleFileChange('surat_permohonan', e.target.files[0])} />
-                </label>
-                {files['surat_permohonan'] && (
-                  <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                    {files['surat_permohonan'].name}
-                  </span>
-                )}
-                <span className="material-symbols-outlined text-outline cursor-help" title="Wajib diunggah dengan tanda tangan basah dan stempel">info</span>
-              </div>
               {fileErrors['surat_permohonan'] && (
                 <p className="text-[11px] text-error mt-1">{fileErrors['surat_permohonan']}</p>
               )}
@@ -469,25 +469,25 @@ export default function PengajuanForm() {
                 <div className="bg-secondary-container/20 p-sm rounded-lg">
                   <span className="material-symbols-outlined text-secondary">verified</span>
                 </div>
-                <div>
-                   <p className="font-label-md text-label-md text-primary">Pakta Integritas</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
-                    <p className="text-[11px] text-black">Pakta Integritas yang sudah ditandatangani diatas Materai 10.000</p>
+                 <div>
+                    <p className="font-label-md text-label-md text-primary">Pakta Integritas</p>
+                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                 </div>
+               </div>
+                <div className="flex flex-col gap-sm w-full">
+                  <p className="text-[11px] text-black md:hidden">Pakta Integritas yang sudah ditandatangani diatas Materai 10.000</p>
+                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm w-full">
+                    Pilih File
+                    <input className="hidden" type="file" onChange={(e) => handleFileChange('pakta_integritas', e.target.files[0])} />
+                  </label>
+                  {files['pakta_integritas'] && (
+                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      {files['pakta_integritas'].name}
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined text-outline cursor-help hidden" title="Pakta Integritas yang sudah ditandatangani diatas Materai 10.000">info</span>
                 </div>
-              </div>
-              <div className="flex items-center gap-sm">
-                <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
-                  Pilih File
-                  <input className="hidden" type="file" onChange={(e) => handleFileChange('pakta_integritas', e.target.files[0])} />
-                </label>
-                {files['pakta_integritas'] && (
-                  <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                    {files['pakta_integritas'].name}
-                  </span>
-                )}
-                <span className="material-symbols-outlined text-outline cursor-help" title="Pakta Integritas yang sudah ditandatangani diatas Materai 10.000">info</span>
-              </div>
               {fileErrors['pakta_integritas'] && (
                 <p className="text-[11px] text-error mt-1">{fileErrors['pakta_integritas']}</p>
               )}
@@ -498,25 +498,25 @@ export default function PengajuanForm() {
                 <div className="bg-secondary-container/20 p-sm rounded-lg">
                   <span className="material-symbols-outlined text-secondary">assignment_ind</span>
                 </div>
-                <div>
-                   <p className="font-label-md text-label-md text-primary">SK PP/PPK/PA Terbaru</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
-                    <p className="text-[11px] text-black">Scan Asli SK Pengangkatan sebagai PP/PPK/PA</p>
+                 <div>
+                    <p className="font-label-md text-label-md text-primary">SK PP/PPK/PA Terbaru</p>
+                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                 </div>
+               </div>
+                <div className="flex flex-col gap-sm w-full">
+                  <p className="text-[11px] text-black md:hidden">Scan Asli SK Pengangkatan sebagai PP/PPK/PA</p>
+                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm w-full">
+                    Pilih File
+                    <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_terbaru', e.target.files[0])} />
+                  </label>
+                  {files['sk_terbaru'] && (
+                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      {files['sk_terbaru'].name}
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined text-outline cursor-help hidden" title="Scan Asli SK Pengangkatan sebagai PP/PPK/PA">info</span>
                 </div>
-              </div>
-              <div className="flex items-center gap-sm">
-                <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
-                  Pilih File
-                  <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_terbaru', e.target.files[0])} />
-                </label>
-                {files['sk_terbaru'] && (
-                  <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                    {files['sk_terbaru'].name}
-                  </span>
-                )}
-                <span className="material-symbols-outlined text-outline cursor-help" title="Scan Asli SK Pengangkatan sebagai PP/PPK/PA">info</span>
-              </div>
               {fileErrors['sk_terbaru'] && (
                 <p className="text-[11px] text-error mt-1">{fileErrors['sk_terbaru']}</p>
               )}
@@ -528,25 +528,25 @@ export default function PengajuanForm() {
                    <div className="bg-secondary-container/20 p-sm rounded-lg">
                      <span className="material-symbols-outlined text-secondary">verified</span>
                    </div>
-                   <div>
-                     <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
-                    <p className="text-[11px] text-black">Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP / SK KPA bagi PPK</p>
+                    <div>
+                      <p className="font-label-md text-label-md text-primary">Sertifikat PBJ Level-1</p>
+                     <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                   </div>
+                 </div>
+                  <div className="flex flex-col gap-sm w-full">
+                    <p className="text-[11px] text-black md:hidden">Sertifikat PBJ Level-1 yang dikeluarkan oleh LKPP / SK KPA bagi PPK</p>
+                    <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-xl py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm w-full">
+                        Pilih File
+                        <input className="hidden" type="file" onChange={(e) => handleFileChange('sertifikat_level1', e.target.files[0])} />
+                      </label>
+                      {files['sertifikat_level1'] && (
+                        <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                          <span className="material-symbols-outlined text-sm">check_circle</span>
+                          {files['sertifikat_level1'].name}
+                        </span>
+                      )}
+                      <span className="material-symbols-outlined text-outline cursor-help hidden" title="Sertifikat Level 1 yang dikeluarkan oleh LKPP">info</span>
                   </div>
-                </div>
-                <div className="flex items-center gap-sm">
-                  <label className="cursor-pointer gradient-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:opacity-90 transition-all inline-block text-center shadow-sm">
-                    Pilih File
-                    <input className="hidden" type="file" onChange={(e) => handleFileChange('sertifikat_level1', e.target.files[0])} />
-                  </label>
-                  {files['sertifikat_level1'] && (
-                    <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
-                      {files['sertifikat_level1'].name}
-                    </span>
-                  )}
-                  <span className="material-symbols-outlined text-outline cursor-help" title="Sertifikat Level 1 yang dikeluarkan oleh LKPP">info</span>
-                </div>
                 {fileErrors['sertifikat_level1'] && (
                   <p className="text-[11px] text-error mt-1">{fileErrors['sertifikat_level1']}</p>
                 )}
