@@ -1,7 +1,7 @@
 import express from 'express'
 import multer from 'multer'
 import path from 'path'
-import { supabase } from '../server/lib/supabase.js'
+import { supabase } from '../../server/lib/supabase.js'
 
 const app = express()
 

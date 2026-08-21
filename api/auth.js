@@ -1,5 +1,5 @@
 import express from 'express'
-import { supabase } from '../server/lib/supabase.js'
+import { supabase } from '../../server/lib/supabase.js'
 import bcrypt from 'bcryptjs'
 
 const app = express()

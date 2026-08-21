@@ -1,5 +1,5 @@
 import express from 'express'
-import { supabase } from '../server/lib/supabase.js'
+import { supabase } from '../../server/lib/supabase.js'
 
 const app = express()
 app.use(express.json())
