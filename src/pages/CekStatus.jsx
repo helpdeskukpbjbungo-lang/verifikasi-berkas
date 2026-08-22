@@ -430,7 +430,7 @@ export default function CekStatus() {
               </div>
               <h3 className="font-headline-md text-headline-md text-primary mb-2">Pengajuan Telah Disetujui</h3>
               <p className="font-body-md text-body-md text-on-surface-variant mb-6">
-                Pengajuan Anda telah diverifikasi dan disetujui oleh tim LPSE.
+                Silahkan cek email anda untuk mendapatkan informasi <strong>Aktivasi Akun</strong>  atau <strong>User ID dan Password</strong> akun SPSE anda. 
               </p>
               <button
                 onClick={() => setShowVerifiedPopup(false)}
