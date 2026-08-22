@@ -229,7 +229,7 @@ export default function DataPPK() {
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Jabatan</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Satuan Kerja</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant">Status</th>
-                <th className="px-2 md:px-md py-sm border-b border-outline-variant text-center">Aksi</th>
+                <th className="px-2 md:px-md py-sm border-b border-outline-variant">Aksi</th>
               </tr>
             </thead>
             <tbody className="text-body-sm text-on-surface divide-y divide-outline-variant">
@@ -261,7 +261,7 @@ export default function DataPPK() {
                         {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
                       </span>
                     </td>
-                    <td className="px-2 md:px-md py-sm text-center">
+                    <td className="px-2 md:px-md py-sm">
                       <div className="relative inline-block">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
@@ -271,7 +271,7 @@ export default function DataPPK() {
                           <span className="material-symbols-outlined text-sm">more_vert</span>
                         </button>
                         {openMenuId === item.id && (
-                          <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 overflow-hidden">
+                          <div className="absolute left-0 top-full mt-1 w-36 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 overflow-hidden">
                             {item.status_aktif === 'aktif' ? (
                               <>
                                 <button
