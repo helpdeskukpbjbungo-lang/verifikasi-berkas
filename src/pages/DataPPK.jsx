@@ -228,7 +228,7 @@ export default function DataPPK() {
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant">NIP</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Jabatan</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Satuan Kerja</th>
-                <th className="px-2 md:px-md py-sm border-b border-outline-variant">Status</th>
+                <th className="px-2 md:px-md py-sm border-b border-outline-variant text-left">Status</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant">Aksi</th>
               </tr>
             </thead>
@@ -255,7 +255,7 @@ export default function DataPPK() {
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.nip}</td>
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                     <td className="px-2 md:px-md py-sm hidden sm:table-cell">{item.satker || '-'}</td>
-                    <td className="px-2 md:px-md py-sm">
+                    <td className="px-2 md:px-md py-sm text-left align-middle">
                       <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status_aktif)}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${item.status_aktif === 'aktif' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
