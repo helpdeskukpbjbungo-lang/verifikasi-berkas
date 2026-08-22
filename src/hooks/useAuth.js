@@ -81,75 +81,42 @@ export function useAuth() {
       return { error: { message: 'Supabase belum dikonfigurasi' } }
     }
 
-    const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data: admin, error: adminError } = await supabase
+      .from(table)
+      .select('*')
+      .ilike('email', email.toLowerCase())
+      .maybeSingle()
 
-    if (sessionError || !sessionData?.session) {
-      const { data: admin, error: adminError } = await supabase
+    if (adminError || !admin) {
+      return { error: { message: 'Email atau password salah' } }
+    }
+
+    const passwordMatch = await bcrypt.compare(password, admin.password_hash)
+    const isPlainText = admin.password_hash === password
+
+    if (!passwordMatch && !isPlainText) {
+      return { error: { message: 'Email atau password salah' } }
+    }
+
+    if (isPlainText) {
+      const hashed = await bcrypt.hash(password, 10)
+      await supabase
         .from(table)
-        .select('*')
-        .ilike('email', email.toLowerCase())
-        .maybeSingle()
-
-      if (adminError || !admin) {
-        return { error: { message: 'Email atau password salah' } }
-      }
-
-      const passwordMatch = await bcrypt.compare(password, admin.password_hash)
-      const isPlainText = admin.password_hash === password
-
-      if (!passwordMatch && !isPlainText) {
-        return { error: { message: 'Email atau password salah' } }
-      }
-
-      if (isPlainText) {
-        const hashed = await bcrypt.hash(password, 10)
-        await supabase
-          .from(table)
-          .update({ password_hash: hashed })
-          .eq('id', admin.id)
-      }
-
-      const dbUser = {
-        id: admin.id,
-        email: admin.email,
-        nama_lengkap: admin.nama_lengkap,
-        role: admin.role || 'verifikator',
-      }
-
-      setUser(dbUser)
-      setStoredUser(dbUser)
-
-      return { data: dbUser, error: null }
+        .update({ password_hash: hashed })
+        .eq('id', admin.id)
     }
 
-    const user = sessionData.user
-    const { error: profileError } = await supabase.from(table).upsert(
-      {
-        email,
-        password_hash: password,
-        nama_lengkap: user.user_metadata?.nama_lengkap || email.split('@')[0],
-        role: user.user_metadata?.role || 'verifikator',
-        id: user.id,
-      },
-      { onConflict: 'id' },
-    )
-
-    if (profileError) {
-      console.error('Sync profile failed:', profileError.message)
+    const dbUser = {
+      id: admin.id,
+      email: admin.email,
+      nama_lengkap: admin.nama_lengkap,
+      role: admin.role || 'verifikator',
     }
 
-    return {
-      data: {
-        id: user.id,
-        email: user.email,
-        nama_lengkap: user.user_metadata?.nama_lengkap || email.split('@')[0],
-        role: user.user_metadata?.role || 'verifikator',
-      },
-      error: null,
-    }
+    setUser(dbUser)
+    setStoredUser(dbUser)
+
+    return { data: dbUser, error: null }
   }
 
   const signOut = async () => {
