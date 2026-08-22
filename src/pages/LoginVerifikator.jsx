@@ -6,7 +6,7 @@ export default function LoginVerifikator() {
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState('')
-  const { signInWithDb, user } = useAuth()
+  const { signIn, user } = useAuth()
   const navigate = useNavigate()
 
   if (user) {
@@ -20,7 +20,7 @@ export default function LoginVerifikator() {
     const trimmedEmail = email.trim().toLowerCase()
     const trimmedPassword = password.trim()
 
-    const { data, error: err } = await signInWithDb(trimmedEmail, trimmedPassword)
+    const { data, error: err } = await signIn(trimmedEmail, trimmedPassword, 'admin_verifikator')
 
     if (err) {
       setError(err.message)

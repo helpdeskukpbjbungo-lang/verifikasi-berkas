@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { apiFetch } from '../lib/api'
+import bcrypt from 'bcryptjs'
 
 const STORAGE_KEY = 'lpse_auth_user'
 
@@ -87,23 +87,42 @@ export function useAuth() {
     })
 
     if (sessionError || !sessionData?.session) {
-      const profileQuery = await supabase
+      const { data: admin, error: adminError } = await supabase
         .from(table)
-        .select('password_hash')
-        .eq('email', email)
-        .limit(1)
+        .select('*')
+        .ilike('email', email.toLowerCase())
+        .maybeSingle()
 
-      if (!profileQuery.error && profileQuery.data?.length) {
+      if (adminError || !admin) {
         return { error: { message: 'Email atau password salah' } }
       }
 
-      const reason = sessionError
-        ? sessionError.message
-        : profileQuery.error
-          ? profileQuery.error.message
-          : 'Email tidak terdaftar'
-      console.error('SignIn detail:', { email, table, sessionError, profileError: profileQuery.error })
-      return { error: { message: `Email atau password salah: ${reason}` } }
+      const passwordMatch = await bcrypt.compare(password, admin.password_hash)
+      const isPlainText = admin.password_hash === password
+
+      if (!passwordMatch && !isPlainText) {
+        return { error: { message: 'Email atau password salah' } }
+      }
+
+      if (isPlainText) {
+        const hashed = await bcrypt.hash(password, 10)
+        await supabase
+          .from(table)
+          .update({ password_hash: hashed })
+          .eq('id', admin.id)
+      }
+
+      const dbUser = {
+        id: admin.id,
+        email: admin.email,
+        nama_lengkap: admin.nama_lengkap,
+        role: admin.role || 'verifikator',
+      }
+
+      setUser(dbUser)
+      setStoredUser(dbUser)
+
+      return { data: dbUser, error: null }
     }
 
     const user = sessionData.user
@@ -133,37 +152,6 @@ export function useAuth() {
     }
   }
 
-  const signInWithDb = async (email, password) => {
-    try {
-      const response = await apiFetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok || result.error) {
-        return { error: { message: result.error || 'Gagal login' } }
-      }
-
-      const dbUser = {
-        id: result.data.id,
-        email: result.data.email,
-        nama_lengkap: result.data.nama_lengkap,
-        role: result.data.role || 'verifikator',
-      }
-
-      setUser(dbUser)
-      setStoredUser(dbUser)
-
-      return { data: dbUser, error: null }
-    } catch (err) {
-      console.error('DB login error:', err)
-      return { error: { message: 'Gagal terhubung ke server' } }
-    }
-  }
-
   const signOut = async () => {
     setUser(null)
     setStoredUser(null)
@@ -175,5 +163,5 @@ export function useAuth() {
     return error
   }
 
-  return { user, loading, signIn, signInWithDb, signOut }
+  return { user, loading, signIn, signOut }
 }
