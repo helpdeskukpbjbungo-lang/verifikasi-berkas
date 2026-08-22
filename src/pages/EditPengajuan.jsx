@@ -650,20 +650,20 @@ export default function EditPengajuan() {
                 <p className="font-body-md text-body-md text-on-surface-variant mb-6">
                   Pengajuan berhasil diperbarui. Silahkan Cek Status Pengajuan secara berkala untuk melihat status verifikasi.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button
-                    onClick={() => setShowSuccessPopup(false)}
-                    className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
-                  >
-                    Tutup
-                  </button>
-                  <button
-                    onClick={() => navigate('/kolom-cek-status')}
-                    className="w-full sm:w-auto px-md py-sm rounded-lg gradient-primary text-on-primary font-bold hover:opacity-90 shadow-sm transition-all"
-                  >
-                    Cek Status
-                  </button>
-                </div>
+                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                   <button
+                     onClick={() => navigate('/kolom-cek-status')}
+                     className="w-full sm:w-auto px-md py-sm rounded-lg gradient-primary text-on-primary font-bold hover:opacity-90 shadow-sm transition-all"
+                   >
+                     Cek Status
+                   </button>
+                   <button
+                     onClick={() => setShowSuccessPopup(false)}
+                     className="w-full sm:w-auto px-md py-sm rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                   >
+                     Tutup
+                   </button>
+                 </div>
               </div>
             </div>
           </div>
