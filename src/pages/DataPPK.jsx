@@ -28,6 +28,7 @@ export default function DataPPK() {
   const [statusFilter, setStatusFilter] = React.useState('all')
   const [currentPage, setCurrentPage] = React.useState(1)
   const [openMenuId, setOpenMenuId] = React.useState(null)
+  const menuContainerRef = React.useRef(null)
   const ITEMS_PER_PAGE = 5
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -46,7 +47,11 @@ export default function DataPPK() {
   }, [searchQuery, statusFilter])
 
   React.useEffect(() => {
-    const handleClickOutside = () => setOpenMenuId(null)
+    const handleClickOutside = (event) => {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(event.target)) {
+        setOpenMenuId(null)
+      }
+    }
     if (openMenuId) {
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
@@ -269,7 +274,7 @@ export default function DataPPK() {
                         {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
                       </span>
                     </td>
-                    <td className="px-2 md:px-md py-sm text-center relative">
+                    <td className="px-2 md:px-md py-sm text-center relative" ref={menuContainerRef}>
                       <button
                         onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
                         className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
