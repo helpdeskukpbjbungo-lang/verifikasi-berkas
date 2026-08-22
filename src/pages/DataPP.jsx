@@ -250,7 +250,6 @@ export default function DataPP() {
                   <tr key={item.id} className="hover:bg-surface-container-low transition-colors">
                     <td className="px-2 md:px-md py-sm">
                       <p className="font-bold">{item.nama_lengkap}</p>
-                      <p className="text-[10px] text-on-surface-variant md:hidden">NIP: {item.nip}</p>
                     </td>
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.nip}</td>
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
