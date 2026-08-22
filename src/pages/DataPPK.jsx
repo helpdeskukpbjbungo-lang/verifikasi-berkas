@@ -256,49 +256,53 @@ export default function DataPPK() {
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                     <td className="px-2 md:px-md py-sm hidden sm:table-cell">{item.satker || '-'}</td>
                     <td className="px-2 md:px-md py-sm text-left align-middle">
-                      <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status_aktif)}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${item.status_aktif === 'aktif' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
-                      </span>
+                      <div className="flex items-center">
+                        <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status_aktif)}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${item.status_aktif === 'aktif' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                          {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-2 md:px-md py-sm text-center relative">
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                        title="Aksi"
-                      >
-                        <span className="material-symbols-outlined text-sm">more_vert</span>
-                      </button>
-                      {openMenuId === item.id && (
-                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-36 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 overflow-hidden">
-                          {item.status_aktif === 'aktif' ? (
-                            <>
+                    <td className="px-2 md:px-md py-sm text-center">
+                      <div className="relative inline-flex flex-col items-center">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
+                          title="Aksi"
+                        >
+                          <span className="material-symbols-outlined text-sm">more_vert</span>
+                        </button>
+                        {openMenuId === item.id && (
+                          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-36 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 overflow-hidden">
+                            {item.status_aktif === 'aktif' ? (
+                              <>
+                                <button
+                                  onClick={() => { openEdit(item); setOpenMenuId(null) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-sm">edit</span>
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => { openMutasi(item); setOpenMenuId(null) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                                  Mutasi
+                                </button>
+                              </>
+                            ) : (
                               <button
-                                onClick={() => { openEdit(item); setOpenMenuId(null) }}
+                                onClick={() => { openDetail(item); setOpenMenuId(null) }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
                               >
-                                <span className="material-symbols-outlined text-sm">edit</span>
-                                Edit
+                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                Detail
                               </button>
-                              <button
-                                onClick={() => { openMutasi(item); setOpenMenuId(null) }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
-                              >
-                                <span className="material-symbols-outlined text-sm">swap_horiz</span>
-                                Mutasi
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => { openDetail(item); setOpenMenuId(null) }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
-                            >
-                              <span className="material-symbols-outlined text-sm">visibility</span>
-                              Detail
-                            </button>
-                          )}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
