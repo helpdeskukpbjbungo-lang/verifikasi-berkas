@@ -19,7 +19,7 @@ export default function DetailPengajuan() {
     'SK Pejabat Pengadaan',
     'SK PPK',
     'SK PA',
-    'Sertifikat PBJ',
+    'Sertifikat PBJ Level-1',
     'SK KPA',
     'Pakta Integritas',
     'Surat Rekomendasi',
