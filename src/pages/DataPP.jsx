@@ -26,6 +26,9 @@ export default function DataPP() {
   const [loadingSatker, setLoadingSatker] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('all')
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const [openMenuId, setOpenMenuId] = React.useState(null)
+  const ITEMS_PER_PAGE = 5
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
@@ -49,6 +52,10 @@ export default function DataPP() {
     }
     loadData()
   }, [user, authLoading, navigate])
+
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, statusFilter])
 
   const openAdd = () => {
     setSelectedPp(null)
@@ -166,8 +173,13 @@ export default function DataPP() {
     return result
   }, [ppList, searchQuery, statusFilter])
 
+  const totalPages = Math.max(1, Math.ceil(filteredPpList.length / ITEMS_PER_PAGE))
+  const safePage = Math.min(currentPage, totalPages)
+  const startIdx = (safePage - 1) * ITEMS_PER_PAGE
+  const paginatedItems = filteredPpList.slice(startIdx, startIdx + ITEMS_PER_PAGE)
+
   return (
-    <div className="w-full max-w-[1280px] pb-16 md:pb-24">
+    <div className="w-full max-w-[1280px] pb-16 md:pb-0">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
         <div>
           <h2 className="font-headline-lg text-headline-lg text-primary mb-xs">Data PP</h2>
@@ -177,7 +189,7 @@ export default function DataPP() {
         </div>
       </div>
 
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm mb-16">
         <div className="p-3 md:p-md border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-sm">
           <div>
             <h3 className="text-headline-sm font-headline-sm text-primary">Daftar PP</h3>
@@ -216,7 +228,7 @@ export default function DataPP() {
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant">NIP</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Jabatan</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Satuan Kerja</th>
-                <th className="px-2 md:px-md py-sm border-b border-outline-variant text-center">Status</th>
+                <th className="px-2 md:px-md py-sm border-b border-outline-variant">Status</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant text-center">Aksi</th>
               </tr>
             </thead>
@@ -227,14 +239,14 @@ export default function DataPP() {
                     Memuat data...
                   </td>
                 </tr>
-              ) : filteredPpList.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-2 md:px-md py-sm text-center text-on-surface-variant">
                     {searchQuery ? 'Tidak ada hasil pencarian.' : 'Belum ada data PP.'}
                   </td>
                 </tr>
               ) : (
-                filteredPpList.map((item) => (
+                paginatedItems.map((item) => (
                   <tr key={item.id} className="hover:bg-surface-container-low transition-colors">
                     <td className="px-2 md:px-md py-sm">
                       <p className="font-bold">{item.nama_lengkap}</p>
@@ -243,39 +255,50 @@ export default function DataPP() {
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.nip}</td>
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                     <td className="px-2 md:px-md py-sm hidden sm:table-cell">{item.satker || '-'}</td>
-                    <td className="px-2 md:px-md py-sm text-center">
+                    <td className="px-2 md:px-md py-sm">
                       <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status_aktif)}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${item.status_aktif === 'aktif' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
                       </span>
                     </td>
                     <td className="px-2 md:px-md py-sm text-center">
-                      <div className="flex items-center justify-center gap-xs">
-                        {item.status_aktif === 'aktif' ? (
-                          <>
-                            <button
-                              onClick={() => openEdit(item)}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                              title="Edit"
-                            >
-                              <span className="material-symbols-outlined text-sm">edit</span>
-                            </button>
-                            <button
-                              onClick={() => openMutasi(item)}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                              title="Mutasi"
-                            >
-                              <span className="material-symbols-outlined text-sm">swap_horiz</span>
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => openDetail(item)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                            title="Detail"
-                          >
-                            <span className="material-symbols-outlined text-sm">visibility</span>
-                          </button>
+                      <div className="relative inline-block">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
+                          title="Aksi"
+                        >
+                          <span className="material-symbols-outlined text-sm">more_vert</span>
+                        </button>
+                        {openMenuId === item.id && (
+                          <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-outline-variant rounded-lg shadow-lg z-30 overflow-hidden">
+                            {item.status_aktif === 'aktif' ? (
+                              <>
+                                <button
+                                  onClick={() => { openEdit(item); setOpenMenuId(null) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-sm">edit</span>
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => { openMutasi(item); setOpenMenuId(null) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                                  Mutasi
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => { openDetail(item); setOpenMenuId(null) }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                Detail
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
@@ -435,7 +458,7 @@ export default function DataPP() {
                   Simpan Mutasi
                 </button>
               </div>
-             </form>
+            </form>
           </div>
         </div>
       )}
@@ -443,14 +466,14 @@ export default function DataPP() {
       {/* Detail Modal */}
       {detailOpen && selectedDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 md:p-0" onClick={() => setDetailOpen(false)}>
-          <div className="w-full md:w-[520px] max-h-[90vh] flex flex-col bg-surface-container-lowest rounded-xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 md:px-5 py-3 md:py-4 border-b border-outline-variant flex items-center justify-between">
+          <div className="w-full md:w-[520px] max-h-[90vh] flex flex-col bg-surface-container-lowest rounded-lg shadow-xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-3 md:p-md border-b border-outline-variant">
               <h3 className="text-headline-sm font-headline-sm text-primary">Detail Data PP</h3>
-              <button onClick={() => setDetailOpen(false)} className="p-1 rounded-md hover:bg-surface-container-low transition-colors">
+              <button onClick={() => setDetailOpen(false)} className="p-xs hover:bg-surface-container-low rounded-lg transition-colors">
                 <span className="material-symbols-outlined text-on-surface-variant">close</span>
               </button>
             </div>
-            <div className="p-4 md:p-5">
+            <div className="p-3 md:p-md">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-bold text-secondary">
