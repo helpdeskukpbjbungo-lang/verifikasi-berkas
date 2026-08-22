@@ -234,7 +234,12 @@ async function upsertDokumen(formulirId, dokumenList) {
 
     const bucket = bucketByJenis[doc.jenis_dokumen]
     const storagePath = doc.path
-    const publicUrlData = supabase.storage.from(bucket).getPublicUrl(storagePath)
+    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(storagePath)
+    const publicUrl = publicUrlData?.publicUrl
+
+    if (!publicUrl) {
+      throw new Error(`Gagal mendapatkan URL publik untuk ${doc.jenis_dokumen}`)
+    }
 
     const { error: dokumenError } = await supabase
       .from('dokumen')
@@ -242,7 +247,7 @@ async function upsertDokumen(formulirId, dokumenList) {
         formulir_id: formulirId,
         jenis_dokumen: doc.jenis_dokumen,
         filename: doc.filename || storagePath.split('/').pop(),
-        filepath: publicUrlData.publicUrl,
+        filepath: publicUrl,
         bucket,
         path: storagePath,
         size_bytes: doc.size_bytes || null,
