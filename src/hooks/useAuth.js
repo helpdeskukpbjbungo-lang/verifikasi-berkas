@@ -159,8 +159,11 @@ export function useAuth() {
       return { error: { message: 'Supabase belum dikonfigurasi' } }
     }
 
-    const { error } = await supabase.auth.signOut()
-    return error
+    const result = await supabase.auth.signOut()
+    if (!result) {
+      return { error: null }
+    }
+    return { error: result.error }
   }
 
   return { user, loading, signIn, signOut }
