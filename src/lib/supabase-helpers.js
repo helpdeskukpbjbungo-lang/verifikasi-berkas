@@ -179,16 +179,21 @@ export async function getPengajuanDetail(id) {
     throw new Error('Formulir tidak ditemukan')
   }
 
-  const { data: dokumen, error: dokumenError } = await supabase
-    .from('dokumen')
-    .select('*')
-    .eq('formulir_id', id)
+  let dokumen = []
+  try {
+    const { data: dokumenData, error: dokumenError } = await supabase
+      .from('dokumen')
+      .select('*')
+      .eq('formulir_id', id)
 
-  if (dokumenError) {
-    throw dokumenError
+    if (!dokumenError && dokumenData) {
+      dokumen = dokumenData
+    }
+  } catch (e) {
+    console.error('Failed to fetch dokumen:', e)
   }
 
-  return { formulir, dokumen: dokumen || [] }
+  return { formulir, dokumen }
 }
 
 const bucketByJenis = {
