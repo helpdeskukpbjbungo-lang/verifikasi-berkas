@@ -27,6 +27,7 @@ export default function DataPPK() {
   const [searchQuery, setSearchQuery] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState('all')
   const [currentPage, setCurrentPage] = React.useState(1)
+  const [openMenuId, setOpenMenuId] = React.useState(null)
   const ITEMS_PER_PAGE = 5
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -43,6 +44,14 @@ export default function DataPPK() {
   React.useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery, statusFilter])
+
+  React.useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null)
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [openMenuId])
 
   const loadData = async () => {
     setLoading(true)
@@ -227,7 +236,7 @@ export default function DataPPK() {
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant">NIP</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Jabatan</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Satuan Kerja</th>
-                <th className="px-2 md:px-md py-sm border-b border-outline-variant text-center">Status</th>
+                <th className="px-2 md:px-md py-sm border-b border-outline-variant">Status</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant text-center">Aksi</th>
               </tr>
             </thead>
@@ -254,41 +263,50 @@ export default function DataPPK() {
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.nip}</td>
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                     <td className="px-2 md:px-md py-sm hidden sm:table-cell">{item.satker || '-'}</td>
-                    <td className="px-2 md:px-md py-sm text-center">
+                    <td className="px-2 md:px-md py-sm">
                       <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(item.status_aktif)}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${item.status_aktif === 'aktif' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         {item.status_aktif === 'aktif' ? 'Aktif' : 'Non-Aktif'}
                       </span>
                     </td>
-                    <td className="px-2 md:px-md py-sm text-center">
-                      <div className="flex items-center justify-center gap-xs">
-                        {item.status_aktif === 'aktif' ? (
-                          <>
+                    <td className="px-2 md:px-md py-sm text-center relative">
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
+                        title="Aksi"
+                      >
+                        <span className="material-symbols-outlined text-sm">more_vert</span>
+                      </button>
+                      {openMenuId === item.id && (
+                        <div className="absolute right-0 top-full mt-1 w-32 bg-surface border border-outline-variant rounded-lg shadow-lg z-20 overflow-hidden">
+                          {item.status_aktif === 'aktif' ? (
+                            <>
+                              <button
+                                onClick={() => { openEdit(item); setOpenMenuId(null) }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-sm">edit</span>
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => { openMutasi(item); setOpenMenuId(null) }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                              >
+                                <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                                Mutasi
+                              </button>
+                            </>
+                          ) : (
                             <button
-                              onClick={() => openEdit(item)}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                              title="Edit"
+                              onClick={() => { openDetail(item); setOpenMenuId(null) }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
                             >
-                              <span className="material-symbols-outlined text-sm">edit</span>
+                              <span className="material-symbols-outlined text-sm">visibility</span>
+                              Detail
                             </button>
-                            <button
-                              onClick={() => openMutasi(item)}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                              title="Mutasi"
-                            >
-                              <span className="material-symbols-outlined text-sm">swap_horiz</span>
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => openDetail(item)}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
-                            title="Detail"
-                          >
-                            <span className="material-symbols-outlined text-sm">visibility</span>
-                          </button>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))
