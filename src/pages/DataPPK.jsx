@@ -225,7 +225,7 @@ export default function DataPPK() {
             <thead className="bg-surface-container-low text-label-md text-primary font-bold uppercase tracking-wider sticky top-0">
               <tr>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant">Nama PPK</th>
-                <th className="px-2 md:px-md py-sm border-b border-outline-variant">NIP</th>
+                <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden lg:table-cell">NIP</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden md:table-cell">Jabatan</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant hidden sm:table-cell">Satuan Kerja</th>
                 <th className="px-2 md:px-md py-sm border-b border-outline-variant text-left">Status</th>
