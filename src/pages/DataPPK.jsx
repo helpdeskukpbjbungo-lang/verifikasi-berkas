@@ -251,7 +251,7 @@ export default function DataPPK() {
                     <td className="px-2 md:px-md py-sm">
                       <p className="font-bold">{item.nama_lengkap}</p>
                     </td>
-                    <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.nip}</td>
+                    <td className="px-2 md:px-md py-sm hidden lg:table-cell">{item.nip}</td>
                     <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                     <td className="px-2 md:px-md py-sm hidden sm:table-cell">{item.satker || '-'}</td>
                     <td className="px-2 md:px-md py-sm text-left align-middle">
