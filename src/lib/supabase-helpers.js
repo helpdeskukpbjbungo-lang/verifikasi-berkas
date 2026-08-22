@@ -424,6 +424,16 @@ export async function syncPpkFromPengajuan() {
       .eq('nip', item.nip)
       .maybeSingle()
 
+    const { data: existingPp } = await supabase
+      .from('pp')
+      .select('id')
+      .eq('nip', item.nip)
+      .maybeSingle()
+
+    if (existingPp) {
+      continue
+    }
+
     const basePayload = {
       nama_lengkap: item.nama_lengkap,
       nip: item.nip,
@@ -602,11 +612,21 @@ export async function syncPpFromPengajuan() {
 
   let inserted = 0
   for (const item of map.values()) {
-    const { data: existing } = await supabase
+    const { data: existingPp } = await supabase
       .from('pp')
       .select('id, status_aktif, alasan_penonaktifan')
       .eq('nip', item.nip)
       .maybeSingle()
+
+    const { data: existingPpk } = await supabase
+      .from('ppk')
+      .select('id')
+      .eq('nip', item.nip)
+      .maybeSingle()
+
+    if (existingPpk) {
+      continue
+    }
 
     const basePayload = {
       nama_lengkap: item.nama_lengkap,
@@ -616,11 +636,11 @@ export async function syncPpFromPengajuan() {
       updated_at: new Date().toISOString(),
     }
 
-    if (existing) {
+    if (existingPp) {
       const { error: updateError } = await supabase
         .from('pp')
         .update(basePayload)
-        .eq('id', existing.id)
+        .eq('id', existingPp.id)
 
       if (updateError) {
         console.error('Sync update error:', updateError)
