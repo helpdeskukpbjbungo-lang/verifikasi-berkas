@@ -263,8 +263,8 @@ export default function DataPPK() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-2 md:px-md py-sm text-center">
-                      <div className="relative inline-flex flex-col items-center">
+                    <td className="px-2 md:px-md py-sm">
+                      <div className="flex items-center justify-center relative">
                         <button
                           onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
                           className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-surface-container-low transition-all"
