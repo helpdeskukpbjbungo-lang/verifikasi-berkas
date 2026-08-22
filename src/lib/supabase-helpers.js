@@ -238,6 +238,11 @@ async function upsertDokumen(formulirId, dokumenList) {
     const publicUrl = publicUrlData?.publicUrl
 
     if (!publicUrl) {
+      const supabaseUrl = supabase.supabaseUrl || ''
+      publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${storagePath}`
+    }
+
+    if (!publicUrl) {
       throw new Error(`Gagal mendapatkan URL publik untuk ${doc.jenis_dokumen}`)
     }
 
