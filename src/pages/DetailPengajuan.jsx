@@ -14,6 +14,26 @@ export default function DetailPengajuan() {
   const [rejectReason, setRejectReason] = React.useState('')
   const [showRevisionForm, setShowRevisionForm] = React.useState(false)
   const [revisionNote, setRevisionNote] = React.useState('')
+
+  const REVISION_RECOMMENDATIONS = [
+    'SK Pejabat Pengadaan',
+    'SK PPK',
+    'SK PA',
+    'Sertifikat PBJ',
+    'SK KPA',
+    'Pakta Integritas',
+    'Surat Rekomendasi',
+    'Surat Permohonan',
+  ]
+
+  const insertRevisionRecommendation = (text) => {
+    setRevisionNote((prev) => {
+      if (!prev.trim()) return text
+      if (prev.endsWith(' ') || prev.endsWith('\n')) return prev + text
+      return prev + ' ' + text
+    })
+  }
+
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
@@ -351,19 +371,31 @@ export default function DetailPengajuan() {
                 </div>
               </div>
             )}
-            {showRevisionForm && (
-              <div className="w-full max-w-2xl bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
-                <label className="block text-label-sm text-on-surface-variant font-semibold mb-xs">
-                  Catatan Revisi
-                </label>
-                <textarea
-                  value={revisionNote}
-                  onChange={(e) => setRevisionNote(e.target.value)}
-                  rows={3}
-                  className="w-full px-md py-sm bg-white border border-outline-variant rounded-lg text-body-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
-                  placeholder="Masukkan catatan revisi untuk pemohon..."
-                />
-                <div className="flex flex-col md:flex-row items-center justify-end gap-sm mt-sm">
+             {showRevisionForm && (
+               <div className="w-full max-w-2xl bg-surface-container-lowest border border-outline-variant rounded-lg p-md">
+                 <label className="block text-label-sm text-on-surface-variant font-semibold mb-xs">
+                   Catatan Revisi
+                 </label>
+                 <div className="flex flex-wrap gap-2 mb-2">
+                   {REVISION_RECOMMENDATIONS.map((text) => (
+                     <button
+                       key={text}
+                       type="button"
+                       onClick={() => insertRevisionRecommendation(text)}
+                       className="px-3 py-1 rounded-full border border-outline-variant bg-white text-label-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                     >
+                       {text}
+                     </button>
+                   ))}
+                 </div>
+                 <textarea
+                   value={revisionNote}
+                   onChange={(e) => setRevisionNote(e.target.value)}
+                   rows={3}
+                   className="w-full px-md py-sm bg-white border border-outline-variant rounded-lg text-body-sm focus:ring-2 focus:ring-primary focus:border-primary resize-none"
+                   placeholder="Masukkan catatan revisi untuk pemohon..."
+                 />
+                 <div className="flex flex-col md:flex-row items-center justify-end gap-sm mt-sm">
                   <button
                     type="button"
                     onClick={() => { setShowRevisionForm(false); setRevisionNote('') }}
