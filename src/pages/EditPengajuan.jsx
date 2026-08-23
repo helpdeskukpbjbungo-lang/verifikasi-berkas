@@ -671,7 +671,7 @@ export default function EditPengajuan() {
 
         <footer className="mt-xl border-t border-outline-variant pt-lg flex flex-col md:flex-row justify-between items-center gap-md">
           <div className="text-white font-body-sm text-body-sm">
-            © 2024 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
+            © 2026 LPSE Portal. All Rights Reserved | Designed & Developed by <a href="https://card-profile-tawny.vercel.app" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">Junaidi</a>
           </div>
         </footer>
       </main>

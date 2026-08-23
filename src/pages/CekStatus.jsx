@@ -415,8 +415,8 @@ export default function CekStatus() {
               <span className="text-body-sm font-body-sm">Estimasi verifikasi: 2-3 hari kerja</span>
             </div>
           </div>
-          <div className="text-white text-body-sm font-body-sm">
-            © 2026 LPSE Portal. Seluruh Hak Cipta Dilindungi | Designed & Developed by Junaidi
+          <div className="text-white font-body-sm text-body-sm">
+            © 2026 LPSE Portal. All Rights Reserved | Designed & Developed by <a href="https://card-profile-tawny.vercel.app" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">Junaidi</a>
           </div>
         </footer>
       </main>
