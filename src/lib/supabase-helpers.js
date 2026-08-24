@@ -400,7 +400,6 @@ export async function syncPpkFromPengajuan() {
   const { data: pengajuanList, error: pengajuanError } = await supabase
     .from('formulir_pengajuan')
     .select('nama_lengkap, nip, jabatan, satker, created_at')
-    .or('jabatan.ilike.%PPK%,jabatan.ilike.%Pejabat Pembuat Komitmen%')
     .eq('status', 'verified')
     .order('created_at', { ascending: false })
 
@@ -408,8 +407,13 @@ export async function syncPpkFromPengajuan() {
     throw pengajuanError
   }
 
+  const ppkCandidates = (pengajuanList || []).filter((item) => {
+    const jabatan = (item.jabatan || '').toLowerCase()
+    return jabatan.includes('ppk') || jabatan.includes('pejabat pembuat komitmen')
+  })
+
   const map = new Map()
-  for (const item of pengajuanList || []) {
+  for (const item of ppkCandidates) {
     const key = item.nip
     if (!map.has(key)) {
       map.set(key, item)
@@ -595,15 +599,21 @@ export async function syncPpFromPengajuan() {
   const { data: pengajuanList, error: pengajuanError } = await supabase
     .from('formulir_pengajuan')
     .select('nama_lengkap, nip, jabatan, satker, created_at')
-    .or('jabatan.ilike.%Pejabat Pengadaan%')
     .eq('status', 'verified')
 
   if (pengajuanError) {
     throw pengajuanError
   }
 
+  const ppCandidates = (pengajuanList || []).filter((item) => {
+    const jabatan = (item.jabatan || '').toLowerCase()
+    const isPengadaan = jabatan.includes('pejabat pengadaan')
+    const isPpk = jabatan.includes('ppk') || jabatan.includes('pembuat komitmen')
+    return isPengadaan && !isPpk
+  })
+
   const map = new Map()
-  for (const item of pengajuanList || []) {
+  for (const item of ppCandidates) {
     const key = item.nip
     if (!map.has(key)) {
       map.set(key, item)
