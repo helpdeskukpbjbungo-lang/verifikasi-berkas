@@ -44,6 +44,7 @@ export default function DashboardVerifikator() {
     pending: pengajuanList.filter(i => i.status === 'submitted').length,
     verified: pengajuanList.filter(i => i.status === 'verified').length,
     rejected: pengajuanList.filter(i => i.status === 'rejected').length,
+    revision: pengajuanList.filter(i => i.status === 'submitted' && !!i.alasan_revisi).length,
   }
 
   const filtered = statusFilter === 'all'
@@ -75,7 +76,10 @@ export default function DashboardVerifikator() {
       .slice(0, 2)
   }
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, item) => {
+    if (item && item.status === 'submitted' && item.alasan_revisi) {
+      return 'bg-orange-100 text-orange-800 border border-orange-200'
+    }
     switch (status) {
       case 'submitted':
         return 'bg-secondary-container/10 text-on-secondary-container border border-secondary-container/30'
@@ -88,7 +92,10 @@ export default function DashboardVerifikator() {
     }
   }
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = (status, item) => {
+    if (item && item.status === 'submitted' && item.alasan_revisi) {
+      return 'Minta Revisi'
+    }
     switch (status) {
       case 'submitted':
         return 'Menunggu Verifikasi'
@@ -154,17 +161,17 @@ export default function DashboardVerifikator() {
         {/* Stat 2 */}
         <div className="bg-white p-lg rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <span className="material-symbols-outlined text-[64px] text-error">assignment_return</span>
+            <span className="material-symbols-outlined text-[64px] text-orange-500">edit</span>
           </div>
           <p className="text-label-md font-bold text-on-surface-variant mb-xs">Perlu Revisi</p>
           <div className="flex items-baseline gap-sm">
-            <span className="text-headline-lg font-black text-error">{String(stats.rejected).padStart(2, '0')}</span>
+            <span className="text-headline-lg font-black text-orange-500">{String(stats.revision).padStart(2, '0')}</span>
             <span className="text-label-sm text-on-surface-variant">Membutuhkan perhatian segera</span>
           </div>
           <div className="mt-md h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
             <div
-              className="h-full bg-error transition-all duration-500"
-              style={{ width: `${stats.total ? ((stats.rejected / stats.total) * 100) : 0}%` }}
+              className="h-full bg-orange-500 transition-all duration-500"
+              style={{ width: `${stats.total ? ((stats.revision / stats.total) * 100) : 0}%` }}
             ></div>
           </div>
         </div>
@@ -381,8 +388,8 @@ export default function DashboardVerifikator() {
                 </div>
                 <div className="bg-surface-container-low rounded-lg p-3">
                   <p className="text-label-xs text-on-surface-variant mb-1">Status</p>
-                  <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(selectedItem.status)}`}>
-                    {getStatusLabel(selectedItem.status)}
+                  <span className={`inline-flex items-center gap-xs px-sm py-1 rounded-full text-[11px] font-bold border ${getStatusBadge(selectedItem.status, selectedItem)}`}>
+                    {getStatusLabel(selectedItem.status, selectedItem)}
                   </span>
                 </div>
                 <div className="bg-surface-container-low rounded-lg p-3">
