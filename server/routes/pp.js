@@ -152,15 +152,21 @@ router.post('/sync', async (req, res) => {
     const { data: pengajuanList, error: pengajuanError } = await supabase
       .from('formulir_pengajuan')
       .select('nama_lengkap, nip, jabatan, satker, created_at')
-      .or('jabatan.ilike.%Pejabat Pengadaan%')
       .eq('status', 'verified')
 
     if (pengajuanError) {
       throw pengajuanError
     }
 
+    const ppCandidates = (pengajuanList || []).filter((item) => {
+      const jabatan = (item.jabatan || '').toLowerCase()
+      const isPengadaan = jabatan.includes('pejabat pengadaan')
+      const isPpk = jabatan.includes('ppk') || jabatan.includes('pembuat komitmen')
+      return isPengadaan && !isPpk
+    })
+
     const map = new Map()
-    for (const item of pengajuanList || []) {
+    for (const item of ppCandidates) {
       const key = item.nip
       if (!map.has(key)) {
         map.set(key, item)
@@ -169,11 +175,21 @@ router.post('/sync', async (req, res) => {
 
     let inserted = 0
     for (const item of map.values()) {
-      const { data: existing } = await supabase
+      const { data: existingPp } = await supabase
         .from('pp')
         .select('id, status_aktif, alasan_penonaktifan')
         .eq('nip', item.nip)
         .maybeSingle()
+
+      const { data: existingPpk } = await supabase
+        .from('ppk')
+        .select('id')
+        .eq('nip', item.nip)
+        .maybeSingle()
+
+      if (existingPpk) {
+        continue
+      }
 
       const basePayload = {
         nama_lengkap: item.nama_lengkap,
@@ -183,11 +199,11 @@ router.post('/sync', async (req, res) => {
         updated_at: new Date().toISOString(),
       }
 
-      if (existing) {
+      if (existingPp) {
         const { error: updateError } = await supabase
           .from('pp')
           .update(basePayload)
-          .eq('id', existing.id)
+          .eq('id', existingPp.id)
 
         if (updateError) {
           console.error('Sync update error:', updateError)

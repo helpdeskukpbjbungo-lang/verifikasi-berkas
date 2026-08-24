@@ -156,16 +156,19 @@ router.post('/sync', async (req, res) => {
     const { data: pengajuanList, error: pengajuanError } = await supabase
       .from('formulir_pengajuan')
       .select('nama_lengkap, nip, jabatan, satker, created_at')
-      .or('jabatan.ilike.%PPK%,jabatan.ilike.%Pejabat Pembuat Komitmen%')
       .eq('status', 'verified')
-      .order('created_at', { ascending: false })
 
     if (pengajuanError) {
       throw pengajuanError
     }
 
+    const ppkCandidates = (pengajuanList || []).filter((item) => {
+      const jabatan = (item.jabatan || '').toLowerCase()
+      return jabatan.includes('ppk') || jabatan.includes('pejabat pembuat komitmen')
+    })
+
     const map = new Map()
-    for (const item of pengajuanList || []) {
+    for (const item of ppkCandidates) {
       const key = item.nip
       if (!map.has(key)) {
         map.set(key, item)
@@ -179,6 +182,16 @@ router.post('/sync', async (req, res) => {
         .select('id, status_aktif, alasan_penonaktifan')
         .eq('nip', item.nip)
         .maybeSingle()
+
+      const { data: existingPp } = await supabase
+        .from('pp')
+        .select('id')
+        .eq('nip', item.nip)
+        .maybeSingle()
+
+      if (existingPp) {
+        continue
+      }
 
       const basePayload = {
         nama_lengkap: item.nama_lengkap,
