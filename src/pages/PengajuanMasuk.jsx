@@ -341,7 +341,7 @@ export default function PengajuanMasuk() {
       </div>
 
       {/* Main Table Section */}
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm md:mr-md mr-4">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
         {/* Table Header & Filters */}
         <div className="p-md md:p-lg border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-md bg-surface-container-lowest">
           <div>
