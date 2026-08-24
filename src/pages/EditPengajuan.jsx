@@ -605,10 +605,43 @@ export default function EditPengajuan() {
                   {missingDocTypes.has('sertifikat_level1') && (
                     <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
                   )}
-                </div>
-              )}
-            </div>
-          </section>
+                 </div>
+               )}
+
+               {formData.jabatan === 'Pejabat Pembuat Komitmen (PPK)' && !/kecamatan/i.test(formData.satker || '') && (revisedDocTypes.length === 0 || revisedDocTypes.includes('sk_kpa_sertifikat_pbj')) && (
+                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-md p-md border border-outline-variant border-dashed rounded-lg drop-zone transition-all">
+                   <div className="flex items-start gap-md">
+                     <div className="bg-secondary-container/20 p-sm rounded-lg">
+                       <span className="material-symbols-outlined text-secondary">verified</span>
+                     </div>
+                     <div>
+                       <p className="font-label-md text-label-md text-primary">SK KPA / Sertifikat PBJ Level-1</p>
+                       <p className="font-body-sm text-body-sm text-on-surface-variant">Format .pdf, Maksimal 2MB</p>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-sm">
+                     <label className="cursor-pointer bg-primary text-on-primary font-label-md text-label-md px-md py-sm rounded-lg hover:bg-primary-container transition-colors inline-block text-center">
+                       Pilih File
+                       <input className="hidden" type="file" onChange={(e) => handleFileChange('sk_kpa_sertifikat_pbj', e.target.files[0])} />
+                     </label>
+                     {files['sk_kpa_sertifikat_pbj'] && (
+                       <span className="font-body-sm text-body-sm text-green-600 flex items-center gap-xs">
+                         <span className="material-symbols-outlined text-sm">check_circle</span>
+                         {files['sk_kpa_sertifikat_pbj'].name}
+                       </span>
+                     )}
+                     <span className="material-symbols-outlined text-outline cursor-help" title="SK KPA atau Sertifikat PBJ Level-1">info</span>
+                   </div>
+                   {fileErrors['sk_kpa_sertifikat_pbj'] && (
+                     <p className="text-[11px] text-error mt-1">{fileErrors['sk_kpa_sertifikat_pbj']}</p>
+                   )}
+                   {missingDocTypes.has('sk_kpa_sertifikat_pbj') && (
+                     <p className="text-[11px] text-error mt-1">Dokumen ini belum diunggah</p>
+                   )}
+                 </div>
+               )}
+             </div>
+           </section>
 
         {/* Mobile action card */}
         <div className="md:hidden bg-surface-container-lowest border border-outline-variant rounded-xl p-4 shadow-sm mt-4">
