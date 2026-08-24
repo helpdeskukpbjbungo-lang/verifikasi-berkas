@@ -393,12 +393,12 @@ export default function PengajuanMasuk() {
                 ) : (
                   paginatedItems.map(item => (
                     <tr key={item.id} className="hover:bg-surface-container-low transition-colors group">
-                      <td className="pl-4 md:pl-md pr-2 md:pr-md py-sm">
-                        <div className="min-w-0">
-                          <p className="font-bold truncate">{item.nama_lengkap}</p>
-                          <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
-                        </div>
-                      </td>
+                       <td className="pl-4 md:pl-md pr-2 md:pr-md py-sm">
+                         <div className="min-w-0">
+                           <p className="font-bold whitespace-normal">{item.nama_lengkap}</p>
+                           <p className="text-[10px] text-on-surface-variant">ID: {item.id.slice(0, 8).toUpperCase()}</p>
+                         </div>
+                       </td>
                       <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.satker || '-'}</td>
                       <td className="px-2 md:px-md py-sm hidden md:table-cell">{item.jabatan || '-'}</td>
                       <td className="px-2 md:px-md py-sm hidden sm:table-cell">{formatDateTime(item.created_at)}</td>
