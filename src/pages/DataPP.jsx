@@ -28,6 +28,7 @@ export default function DataPP() {
   const [statusFilter, setStatusFilter] = React.useState('all')
   const [currentPage, setCurrentPage] = React.useState(1)
   const [openMenuId, setOpenMenuId] = React.useState(null)
+  const [syncing, setSyncing] = React.useState(false)
   const ITEMS_PER_PAGE = 5
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
@@ -41,6 +42,19 @@ export default function DataPP() {
       console.error('Failed to load PP data:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      await syncPpFromPengajuan()
+      alert('Sinkronisasi PP selesai')
+      loadData()
+    } catch (err) {
+      alert(err.message || 'Gagal sinkronisasi data PP')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -196,6 +210,14 @@ export default function DataPP() {
             <p className="text-body-sm text-on-surface-variant">Daftar Pejabat Pengadaan yang terdaftar dalam sistem.</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-sm">
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="inline-flex items-center justify-center gap-xs px-md py-sm bg-primary text-white rounded-lg text-label-sm font-medium hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">{syncing ? 'progress_activity' : 'sync'}</span>
+              {syncing ? 'Menyinkronkan...' : 'Sinkronisasi'}
+            </button>
             <div className="relative w-full sm:w-72">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
               <input
